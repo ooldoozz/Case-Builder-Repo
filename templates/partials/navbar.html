@@ -5,8 +5,8 @@
     <!-- Logo -->
     <a href="/" class="flex items-center gap-3">
       <svg
-        width="56"
-        height="56"
+        width="40"
+        height="40"
         viewBox="0 0 56 56"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -36,24 +36,27 @@
     <!-- Navigation -->
     <div class="flex items-center gap-2">
       <a
-        href="/"
-        class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
-      >
-        Home
-      </a>
-
-      <a
         href="/cases/new"
-        class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
+        class="rounded-full px-4 py-2 text-sm font-medium transition
+               {% if request.path.startswith('/cases/new') %}
+                 bg-[#F1F3FF] text-[#4F6BFF]
+               {% else %}
+                 text-gray-600 hover:bg-gray-100 hover:text-gray-900
+               {% endif %}"
       >
         New Case
       </a>
 
       <a
         href="/archive"
-        class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
+        class="rounded-full px-4 py-2 text-sm font-medium transition
+               {% if request.path.startswith('/archive') %}
+                 bg-[#F1F3FF] text-[#4F6BFF]
+               {% else %}
+                 text-gray-600 hover:bg-gray-100 hover:text-gray-900
+               {% endif %}"
       >
-        Saved Cases
+        Archive
       </a>
     </div>
   </div>

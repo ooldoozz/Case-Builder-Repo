@@ -1,3 +1,6 @@
+import json
+from datetime import datetime, timezone
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -13,6 +16,7 @@ from database import get_db
 from schemas import CreateCaseRequest
 from services.ai.case_builder import generate_case
 from services.storage.case_storage import save_case
+from repositories import get_cases, get_case_by_id
 
 templates = Jinja2Templates(directory="templates")
 
@@ -83,10 +87,105 @@ def edit_case(
         },
     )
 
+TOTAL_FIELDS = 9
+
+
+def calculate_progress(result: dict) -> tuple[int, int]:
+    fields = [
+        "project_overview",
+        "problem",
+        "my_role",
+        "users_context",
+        "research",
+        "key_ux_decisions",
+        "solution",
+        "impact",
+        "what_i_learned",
+    ]
+
+    filled = 0
+
+    for field in fields:
+        value = result.get(field)
+
+        if value not in (None, "", []):
+            filled += 1
+
+    progress = round((filled / TOTAL_FIELDS) * 100)
+
+    return filled, progress
+
+def humanize_datetime(dt: datetime) -> str:
+
+    now = datetime.now(timezone.utc)
+
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    diff = now - dt
+
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return "just now"
+
+    minutes = seconds // 60
+
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+
+    hours = minutes // 60
+
+    if hours < 24:
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+
+    days = diff.days
+
+    if days == 1:
+        return "yesterday"
+
+    if days < 7:
+        return f"{days} days ago"
+
+    return dt.strftime("%b %d, %Y")
 
 @page_router.get("/archive")
-def archive(request: Request):
+def archive(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    cases = get_cases(db)
+
+    archive_cases = []
+
+    for case in cases:
+
+        result = json.loads(case.generated_json)
+
+        filled, progress = calculate_progress(result)
+
+        archive_cases.append({
+            "id": case.id,
+            "title": case.title,
+            "status": case.status,
+            "version": case.version,
+            "template": case.template,
+            "updated_at": humanize_datetime(case.updated_at),
+            "created_at": case.created_at,
+            "progress": progress,
+            "filled_sections": filled,
+        })
+
+    archive_cases.sort(
+        key=lambda x: x["created_at"],
+        reverse=True,
+    )
+
     return templates.TemplateResponse(
         request=request,
         name="pages/archive.html",
+        context={
+            "cases": archive_cases,
+        },
     )
