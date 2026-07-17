@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Case Builder API",
-    description="AI-powered Product Design Case Study Builder",
+    description="AI-powered Case Study Builder",
     version="0.1.0",
     lifespan=lifespan,
 )
