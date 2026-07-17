@@ -77,13 +77,34 @@ def generate_case_page(
 @page_router.get("/cases/{case_id}/edit")
 def edit_case(
     request: Request,
-    case_id: str,
+    case_id: int,
+    db: Session = Depends(get_db),
 ):
+
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    result = json.loads(case.generated_json)
+
+    filled, progress = calculate_progress(result)
+
     return templates.TemplateResponse(
         request=request,
         name="pages/edit_case.html",
         context={
-            "case_id": case_id,
+            "case": case,
+            "result": result,
+            "progress": progress,
+            "filled_sections": filled,
+            "total_sections": TOTAL_FIELDS,
         },
     )
 
