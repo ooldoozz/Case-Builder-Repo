@@ -1,13 +1,138 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
 
-{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-16">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <!-- Left: copy -->
+    <div>
+      <h1
+        class="text-4xl lg:text-5xl font-extrabold leading-tight text-slate-900"
+      >
+        Turn raw project notes into a structured case study.
+      </h1>
 
-<h1 class="text-4xl font-bold">
-    Case Builder
-</h1>
+      <p class="mt-6 text-lg text-slate-600 max-w-xl">
+        Paste your notes, review and edit the result, check what's missing, then
+        save your case study.
+      </p>
 
-<p class="mt-4 text-gray-600">
-    AI-powered Product Design Case Study Builder
-</p>
+      <ol class="flex items-center gap-4 mt-6 text-sm text-slate-500">
+        <li
+          class="flex items-center gap-2"
+          style="font-weight: 500; font-size: 14px"
+        >
+          <span class="font-medium text-slate-700" style="color: #4f6bff"
+            >1</span
+          ><b>Paste notes</b>
+        </li>
 
+        <li class="flex items-center">
+          <svg
+            width="11"
+            height="9"
+            viewBox="0 0 11 9"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5.77699 8.90909L5.01136 8.15341L8.16335 5.00142H0V3.90767H8.16335L5.01136 0.765622L5.77699 -2.6226e-06L10.2315 4.45454L5.77699 8.90909Z"
+              fill="#667085"
+            />
+          </svg>
+        </li>
+
+        <li
+          class="flex items-center gap-2"
+          style="font-weight: 500; font-size: 14px"
+        >
+          <span class="font-medium text-slate-700" style="color: #4f6bff"
+            >2</span
+          ><b>Review &amp; improve</b>
+        </li>
+
+        <li class="flex items-center">
+          <svg
+            width="11"
+            height="9"
+            viewBox="0 0 11 9"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5.77699 8.90909L5.01136 8.15341L8.16335 5.00142H0V3.90767H8.16335L5.01136 0.765622L5.77699 -2.6226e-06L10.2315 4.45454L5.77699 8.90909Z"
+              fill="#667085"
+            />
+          </svg>
+        </li>
+
+        <li
+          class="flex items-center gap-2"
+          style="font-weight: 500; font-size: 14px"
+        >
+          <span class="font-medium text-slate-700" style="color: #4f6bff"
+            >3</span
+          ><b>Save</b>
+        </li>
+      </ol>
+
+      <div class="mt-8">
+        <a
+          href="/cases/new"
+          class="inline-block bg-slate-900 text-white px-6 py-3 rounded-md shadow hover:bg-slate-800"
+        >
+          Create a case study
+        </a>
+      </div>
+
+      <p class="mt-4 text-sm text-emerald-600 flex items-center gap-2">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M15 9.74997C15 13.5 12.375 15.375 9.255 16.4625C9.09162 16.5178 8.91415 16.5152 8.7525 16.455C5.625 15.375 3 13.5 3 9.74997V4.49997C3 4.30106 3.07902 4.11029 3.21967 3.96964C3.36032 3.82899 3.55109 3.74997 3.75 3.74997C5.25 3.74997 7.125 2.84997 8.43 1.70997C8.58889 1.57422 8.79102 1.49963 9 1.49963C9.20898 1.49963 9.41111 1.57422 9.57 1.70997C10.8825 2.85747 12.75 3.74997 14.25 3.74997C14.4489 3.74997 14.6397 3.82899 14.7803 3.96964C14.921 4.11029 15 4.30106 15 4.49997V9.74997Z"
+            stroke="#047857"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M6.75 9L8.25 10.5L11.25 7.5"
+            stroke="#047857"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Built only from your information. Your data stays yours. You stay in
+        control.
+      </p>
+    </div>
+
+    <div class="relative">
+      <!-- Hero glow (positioned relative to this parent) -->
+      <div
+        style="position:absolute; width:560px; height:560px; right:-140px; top:-40px; background:#E8ECFF; opacity:0.72; border-radius:50%; filter:blur(48px); pointer-events:none;"
+        aria-hidden="true"
+      ></div>
+
+      <!-- Hero glow secondary (positioned relative to this parent) -->
+      <div
+        style="position:absolute; width:390px; height:390px; right:-40px; bottom:-40px; background:#E6F7F4; opacity:0.66; border-radius:50%; filter:blur(40px); pointer-events:none;"
+        aria-hidden="true"
+      ></div>
+
+      <!-- product image -->
+      <div class="relative rounded-2xl overflow-hidden">
+        <img
+          src="static/images/Product-Preview.png"
+          alt="Product preview"
+          class="w-full h-auto object-cover block"
+        />
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
