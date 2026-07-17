@@ -7,7 +7,13 @@
 
 <body class="bg-gray-100">
 
-    {% include "partials/navbar.html" %}
+    {% set hide_nav_links = hide_nav_links | default(false) %}
+
+    {% if custom_navbar %}
+        {% include custom_navbar %}
+    {% else %}
+        {% include "partials/navbar.html" %}
+    {% endif %}
 
     <main class="container mx-auto py-8">
 

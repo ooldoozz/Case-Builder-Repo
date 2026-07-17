@@ -3,211 +3,171 @@
 {% block content %}
 
 {% set status_styles = {
-    "complete": {"bg":"#ECFDF3","border":"#BBF7D0","text":"#15803D","dot":"#22C55E","label":"Complete"},
-    "weak":     {"bg":"#FFFAEB","border":"#FDE68A","text":"#B45309","dot":"#F59E0B","label":"Weak"},
-    "missing":  {"bg":"#FEF2F2","border":"#FECACA","text":"#B91C1C","dot":"#EF4444","label":"Missing"},
-    "unclear":  {"bg":"#F5F3FF","border":"#DDD6FE","text":"#5B21B6","dot":"#8B5CF6","label":"Unclear"}
+    "complete": {
+        "bg":"#ECFDF3",
+        "border":"#BBF7D0",
+        "text":"#15803D",
+        "dot":"#22C55E",
+        "label":"Complete"
+    },
+    "missing": {
+        "bg":"#FEF2F2",
+        "border":"#FECACA",
+        "text":"#B91C1C",
+        "dot":"#EF4444",
+        "label":"Missing"
+    }
 } %}
-
-{% set sections = [
-    {"n":"01","title":"Project Overview","status":"complete","empty":false,
-     "body":"Petabad is an online pet supplies store. This project focused on improving the mobile checkout experience and reducing friction during purchase completion.",
-     "note":none},
-    {"n":"02","title":"Problem","status":"unclear","empty":false,
-     "body":"Some users had difficulty completing checkout and occasionally left before finishing the purchase.",
-     "note":"The affected user and importance of the problem are not clearly explained."},
-    {"n":"03","title":"My Role","status":"unclear","empty":false,
-     "body":"I worked with the product team and helped improve the checkout experience.",
-     "note":"Your exact responsibilities and contribution are not clearly defined."},
-    {"n":"04","title":"Users / Context","status":"weak","empty":false,
-     "body":"The main users were mobile customers purchasing pet products online.",
-     "note":"Add more information about the target users, context, or product constraints."},
-    {"n":"05","title":"Research / Discovery","status":"missing","empty":true,
-     "body":"",
-     "placeholder":"Add research evidence, user feedback, observations, analytics, or supporting data.",
-     "note":"No user research, evidence, observation, or supporting data was provided."},
-    {"n":"06","title":"Key UX Decisions","status":"weak","empty":false,
-     "body":"We simplified the checkout flow and reduced the number of steps.",
-     "note":"Explain why the main design decisions were selected."},
-    {"n":"07","title":"Solution","status":"complete","empty":false,
-     "body":"The checkout flow was simplified, form fields were reorganized, and the primary actions were made clearer on mobile screens.",
-     "note":none},
-    {"n":"08","title":"Impact","status":"weak","empty":false,
-     "body":"The updated checkout experience was easier to use and received positive feedback.",
-     "note":"Add a measurable result, metric, behavior change, or defensible outcome."},
-    {"n":"09","title":"What I Learned","status":"missing","empty":true,
-     "body":"",
-     "placeholder":"Add the main learning, limitation, reflection, or next step from the project.",
-     "note":"Add the main learning, limitation, or reflection from the project."}
-] %}
-
-<div class="max-w-[1300px] mx-auto py-10 px-4">
-
-    <div class="mb-2">
-        <div class="flex items-center gap-2 text-sm text-[#667085] mb-3">
-            <a href="/archive" class="hover:text-[#0F172A]">Archive</a>
-            <span>/</span>
-            <span class="text-[#0F172A] font-medium">Petabad Checkout Improvement</span>
-            <span class="rounded-md bg-[#F3F4F6] px-2 py-0.5 text-[11px] font-semibold tracking-wide text-[#667085]">DRAFT</span>
-        </div>
-
-        <div class="flex items-start justify-between">
-            <div>
-                <div class="flex items-baseline gap-3">
-                    <h1 class="text-[28px] font-bold text-[#0F172A]">Petabad Checkout Improvement</h1>
-                    <span class="text-xs font-semibold tracking-wider text-[#98A2B3] uppercase">Generated Case Study</span>
-                </div>
-                <p class="mt-1.5 text-sm text-[#667085]">
-                    Review and edit each field. Sections marked Missing or Unclear need attention before your case study is ready.
-                </p>
-            </div>
-
-            <div class="flex items-center gap-3 shrink-0">
-                <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-semibold text-[#344054] hover:border-[#D0D5DD]">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                        <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    Save Case
-                </button>
-                <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-[#18233F] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0F1830]">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    Copy Final Output
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="max-w-[1300px] mx-auto pt-0 pb-10 px-4">
 
 
-    <div class="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
+    <div class="flex items-start justify-between">
 
-        <!-- Left: editable sections -->
-        <div class="space-y-5">
-            {% for s in sections %}
-            {% set st = status_styles[s.status] %}
-            <div class="rounded-2xl border border-[#E4E7EC] bg-white p-6">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-baseline gap-3">
-                        <span class="font-mono text-xs text-[#98A2B3]">{{ s.n }}</span>
-                        <h3 class="text-[17px] font-bold text-[#0F172A]">{{ s.title }}</h3>
-                    </div>
+        <div>
 
-                    <div class="flex items-center gap-2 shrink-0">
-                        {% if s.empty %}
-                        <span class="font-mono text-[11px] tracking-wider text-[#98A2B3]">EMPTY</span>
-                        {% endif %}
-                        <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
-                              style="background:{{ st.bg }}; border-color:{{ st.border }}; color:{{ st.text }};">
-                            <span class="w-1.5 h-1.5 rounded-full" style="background:{{ st.dot }}"></span>
-                            {{ st.label }}
-                        </span>
-                    </div>
-                </div>
+            <h1 class="text-[28px] font-bold text-[#0F172A]">
+                {{ case.title }}
+            </h1>
 
-                <textarea
-                    name="section_{{ s.n }}"
-                    rows="{{ 5 if s.empty else 3 }}"
-                    placeholder="{{ s.placeholder if s.empty else '' }}"
-                    class="mt-3 w-full resize-none border-0 p-0 text-[15px] leading-relaxed text-[#0F172A] placeholder-[#B8BFCB] outline-none focus:ring-0"
-                >{{ s.body }}</textarea>
-
-                {% if s.note %}
-                <div class="mt-3 flex items-start gap-2.5 rounded-lg border border-[#E4E7EC] bg-[#F9FAFB] px-4 py-3">
-                    <svg class="w-4 h-4 mt-0.5 shrink-0 text-[#98A2B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <p class="text-sm text-[#667085]">{{ s.note }}</p>
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-
-            <div class="flex items-center justify-between pt-2">
-                <p class="text-sm text-[#98A2B3]">You can continue editing this case after saving it.</p>
-
-                <div class="flex items-center gap-3">
-                    <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-semibold text-[#344054] hover:border-[#D0D5DD]">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
-                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                            <polyline points="7 3 7 8 15 8"></polyline>
-                        </svg>
-                        Save Case
-                    </button>
-                    <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-[#18233F] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0F1830]">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                        Copy Final Output
-                    </button>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Right: Missing Info Checklist -->
-        <div class="rounded-2xl border border-[#E4E7EC] bg-white p-6 lg:sticky lg:top-6">
-            <h2 class="text-[15px] font-bold text-[#0F172A]">Missing Info Checklist</h2>
-            <p class="mt-1.5 text-sm text-[#667085]">
-                Review the sections that are missing, weak, or unclear before finalising your case study.
+            <p class="mt-2 text-sm text-[#667085]">
+                Review and edit each field. Sections marked Missing or Unclear need attention before your case study is ready.
             </p>
 
-            <div class="grid grid-cols-2 gap-2.5 mt-5">
-                {% for key, count in {"complete":2, "weak":3, "missing":2, "unclear":2}.items() %}
-                {% set st = status_styles[key] %}
-                <div class="rounded-lg border px-3 py-2.5" style="background:{{ st.bg }}; border-color:{{ st.border }};">
-                    <span class="inline-flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full" style="background:{{ st.dot }}"></span>
-                        <span class="text-sm font-bold" style="color:{{ st.text }}">{{ count }}</span>
-                        <span class="text-sm" style="color:{{ st.text }}">{{ st.label }}</span>
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="mt-5 divide-y divide-[#E4E7EC]">
-                {% for s in sections if s.status != "complete" %}
-                {% set st = status_styles[s.status] %}
-                <div class="py-4 first:pt-0">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-baseline gap-2">
-                            <span class="font-mono text-xs text-[#98A2B3]">{{ s.n }}</span>
-                            <h4 class="text-sm font-semibold text-[#0F172A]">{{ s.title }}</h4>
-                        </div>
-                        <span class="inline-flex items-center gap-1.5 shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                              style="background:{{ st.bg }}; border-color:{{ st.border }}; color:{{ st.text }};">
-                            <span class="w-1.5 h-1.5 rounded-full" style="background:{{ st.dot }}"></span>
-                            {{ st.label }}
-                        </span>
-                    </div>
-                    <p class="mt-1.5 text-sm text-[#667085]">{{ s.note }}</p>
-                </div>
-                {% endfor %}
-
-                {% set vst = status_styles["missing"] %}
-                <div class="py-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <h4 class="text-sm font-semibold text-[#0F172A]">Visual Evidence</h4>
-                        <span class="inline-flex items-center gap-1.5 shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                              style="background:{{ vst.bg }}; border-color:{{ vst.border }}; color:{{ vst.text }};">
-                            <span class="w-1.5 h-1.5 rounded-full" style="background:{{ vst.dot }}"></span>
-                            {{ vst.label }}
-                        </span>
-                    </div>
-                    <p class="mt-1.5 text-xs italic text-[#98A2B3]">Reminder — not included in section count</p>
-                    <p class="mt-1 text-sm text-[#667085]">Add screenshots, prototypes, or before/after visuals to support your solution.</p>
-                </div>
-            </div>
         </div>
 
     </div>
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+
+    <div class="space-y-5">
+
+        {% for section in sections %}
+
+        {% set style = status_styles[section.status] %}
+
+        <div class="rounded-2xl border border-[#E4E7EC] bg-white p-6">
+
+            <div class="flex items-start justify-between">
+
+                <div class="flex items-baseline gap-3">
+
+                    <span class="font-mono text-xs text-[#98A2B3]">
+                        {{ section.number }}
+                    </span>
+
+                    <h3 class="text-lg font-bold">
+                        {{ section.title }}
+                    </h3>
+
+                </div>
+
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold"
+                    style="
+                        background:{{ style.bg }};
+                        border-color:{{ style.border }};
+                        color:{{ style.text }};
+                    "
+                >
+
+                    <span
+                        class="w-1.5 h-1.5 rounded-full"
+                        style="background:{{ style.dot }}"
+                    ></span>
+
+                    {{ style.label }}
+
+                </span>
+
+            </div>
+
+            <textarea
+                name="{{ section.key }}"
+                rows="5"
+                class="mt-4 w-full resize-none border-0 outline-none text-[15px]"
+                placeholder="Write here..."
+            >{{ section.body }}</textarea>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+    <div class="rounded-2xl border border-[#E4E7EC] bg-white p-6 sticky top-6">
+
+    <h2 class="font-bold text-[#0F172A]">
+        Progress
+    </h2>
+
+    <div class="mt-4">
+
+        <div class="flex justify-between text-sm">
+
+            <span>{{ filled_sections }} / {{ total_sections }}</span>
+
+            <span>{{ progress }}%</span>
+
+        </div>
+
+        <div class="mt-2 h-2 rounded-full bg-[#EEF2F6] overflow-hidden">
+
+            <div
+                class="h-full bg-[#18233F]"
+                style="width: {{ progress }}%;"
+            ></div>
+
+        </div>
+
+    </div>
+
+    <hr class="my-6">
+
+    <h3 class="font-semibold text-[#0F172A]">
+        Missing Information
+    </h3>
+
+    {% if missing_sections %}
+
+        <div class="mt-4 space-y-3">
+
+            {% for section in missing_sections %}
+
+            <div class="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3">
+
+                <div class="flex items-center justify-between">
+
+                    <span class="font-medium">
+                        {{ section.title }}
+                    </span>
+
+                    <span class="text-xs font-semibold text-red-700">
+                        Missing
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="mt-4 rounded-xl bg-green-50 border border-green-200 p-4">
+
+            <p class="text-sm text-green-700">
+
+                🎉 All required sections are completed.
+
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+</div>
 
 </div>
 

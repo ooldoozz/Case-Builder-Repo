@@ -34,30 +34,25 @@
     </a>
 
     <!-- Navigation -->
+
+    {% if not hide_nav_links %}
+
     <div class="flex items-center gap-2">
       <a
         href="/cases/new"
-        class="rounded-full px-4 py-2 text-sm font-medium transition
-               {% if request.path.startswith('/cases/new') %}
-                 bg-[#F1F3FF] text-[#4F6BFF]
-               {% else %}
-                 text-gray-600 hover:bg-gray-100 hover:text-gray-900
-               {% endif %}"
+        class="rounded-full px-4 py-2 text-sm font-medium transition {% if request.url.path == '/cases/new' %} bg-[#F1F3FF] text-[#4F6BFF] {% else %} text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% endif %}"
       >
         New Case
       </a>
 
       <a
         href="/archive"
-        class="rounded-full px-4 py-2 text-sm font-medium transition
-               {% if request.path.startswith('/archive') %}
-                 bg-[#F1F3FF] text-[#4F6BFF]
-               {% else %}
-                 text-gray-600 hover:bg-gray-100 hover:text-gray-900
-               {% endif %}"
+        class="rounded-full px-4 py-2 text-sm font-medium transition {% if request.url.path.startswith('/archive') %} bg-[#F1F3FF] text-[#4F6BFF] {% else %} text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% endif %}"
       >
         Archive
       </a>
     </div>
+
+    {% endif %}
   </div>
 </nav>

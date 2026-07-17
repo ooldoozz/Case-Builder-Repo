@@ -73,6 +73,17 @@ def generate_case_page(
         status_code=303,
     )
 
+SECTION_DEFINITIONS = [
+    ("01", "Project Overview", "project_overview"),
+    ("02", "Problem", "problem"),
+    ("03", "My Role", "my_role"),
+    ("04", "Users / Context", "users_context"),
+    ("05", "Research / Discovery", "research"),
+    ("06", "Key UX Decisions", "key_ux_decisions"),
+    ("07", "Solution", "solution"),
+    ("08", "Impact", "impact"),
+    ("09", "What I Learned", "what_i_learned"),
+]
 
 @page_router.get("/cases/{case_id}/edit")
 def edit_case(
@@ -80,7 +91,6 @@ def edit_case(
     case_id: int,
     db: Session = Depends(get_db),
 ):
-
     case = get_case_by_id(
         db=db,
         case_id=case_id,
@@ -96,15 +106,44 @@ def edit_case(
 
     filled, progress = calculate_progress(result)
 
+    sections = []
+
+    for number, title, key in SECTION_DEFINITIONS:
+
+        value = result.get(key)
+
+        if value in (None, "", []):
+            status = "missing"
+            body = ""
+        else:
+            status = "complete"
+            body = value
+
+        sections.append({
+            "number": number,
+            "title": title,
+            "key": key,
+            "status": status,
+            "body": body,
+        })
+
+    missing_sections = [
+        s for s in sections
+        if s["status"] == "missing"
+    ]
+
     return templates.TemplateResponse(
         request=request,
         name="pages/edit_case.html",
         context={
             "case": case,
             "result": result,
+            "sections": sections,
+            "missing_sections": missing_sections,
             "progress": progress,
             "filled_sections": filled,
             "total_sections": TOTAL_FIELDS,
+            "custom_navbar": "partials/edit_navbar.html",
         },
     )
 
