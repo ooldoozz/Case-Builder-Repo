@@ -46,9 +46,7 @@
         </svg>
       </div>
 
-      <p class="mt-2 text-sm text-[#98A2B3]">
-        One focused template is available in the MVP.
-      </p>
+      <p class="mt-2 text-sm text-[#98A2B3]">Fixed MVP template</p>
     </div>
 
     <div class="mt-5">
@@ -56,7 +54,7 @@
         for="project_name"
         class="block mb-2 text-sm font-semibold text-[#0F172A]"
       >
-        Project Name
+        Project Title
       </label>
 
       <input
@@ -67,6 +65,12 @@
         placeholder="Petabad Checkout Improvement"
         class="w-full rounded-xl border border-[#E4E7EC] px-4 py-3.5 text-[15px] text-[#0F172A] placeholder-[#98A2B3] outline-none transition focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/15"
       />
+      <p
+        id="project-error"
+        class="mt-2 hidden text-[12px] leading-[15px] text-[#D92D20]"
+      >
+        Enter a project title
+      </p>
     </div>
 
     <div class="mt-5">
@@ -82,99 +86,125 @@
         name="raw_notes"
         rows="8"
         required
-        placeholder="Paste your raw project notes here. Include the problem, your role, research, design decisions, solution, impact, and learnings if available."
+        placeholder="Petabad is an online pet supplies store. Users were dropping during mobile checkout. I worked with the product team, simplified the flow, reorganized form fields, and clarified the primary actions. The updated experience received positive feedback."
         class="w-full rounded-xl border border-[#E4E7EC] px-4 py-3.5 text-[15px] text-[#0F172A] placeholder-[#98A2B3] outline-none transition focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/15"
       ></textarea>
-
-      <p class="mt-2 text-sm text-[#98A2B3]">
-        You do not need to organize your notes. Case Builder will structure them
-        into editable fields.
+      <p
+        id="notes-error"
+        class="mt-2 hidden text-[12px] leading-[15px] text-[#D92D20]"
+      >
+        Add enough project information to generate a case study
       </p>
     </div>
 
-    <div class="mt-6">
+    <div class="mt-8 flex flex-col items-end gap-2">
       <button
         id="generate-btn"
         type="submit"
         disabled
-        class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#B8C4E8] px-6 py-3.5 text-[15px] font-semibold text-white transition disabled:cursor-not-allowed"
+        class="flex h-12 min-w-[150px] items-center justify-center rounded-lg bg-[#18233F] px-4 text-[14px] font-medium text-white opacity-45 transition disabled:cursor-not-allowed"
       >
-        <span id="generate-spinner" class="hidden">
-          <svg
-            class="h-4 w-4 animate-spin"
-            viewBox="0 0 6 6"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M0.543044 3.96864C0.306221 3.48208 0.229512 2.93303 0.323911 2.40018C0.41831 1.86734 0.67897 1.37806 1.06853 1.00247C1.4581 0.626869 1.95657 0.384241 2.4925 0.309353C3.02843 0.234465 3.57432 0.331162 4.05192 0.585586C4.52952 0.84001 4.91431 1.2391 5.15115 1.72566C5.388 2.21221 5.46473 2.76126 5.37035 3.29411C5.27598 3.82695 5.01534 4.31625 4.62579 4.69186C4.23624 5.06747 3.73778 5.31012 3.20185 5.38503"
-              stroke="white"
-              stroke-width="0.57"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </span>
-
-        <span id="generate-text"> Generate Case Fields </span>
+        Generate Case Study
       </button>
 
-      <div class="mt-5 text-center">
-        <a
-          href="/archive"
-          class="text-sm font-medium text-[#667085] hover:text-[#0F172A]"
-        >
-          View Saved Cases
-        </a>
+      <div id="loadingState" class="hidden items-center gap-2">
+        <div
+          class="h-4 w-4 animate-spin rounded-full border-[1.33px] border-[#667085] border-t-transparent"
+        ></div>
+
+        <p class="text-[14px] font-normal leading-5 text-[#667085]">
+          Structuring raw notes and checking missing information...
+        </p>
       </div>
     </div>
   </form>
 </div>
 <script>
   const form = document.getElementById("generate-form");
+  const projectName = document.getElementById("project_name");
+  const rawNotes = document.getElementById("raw_notes");
+  const loadingState = document.getElementById("loadingState");
+  const button = document.getElementById("generate-btn");
+  const projectError = document.getElementById("project-error");
+  const notesError = document.getElementById("notes-error");
 
-  if (form) {
-    const projectName = document.getElementById("project_name");
-    const rawNotes = document.getElementById("raw_notes");
+  let projectTouched = false;
+  let notesTouched = false;
 
-    const button = document.getElementById("generate-btn");
-    const text = document.getElementById("generate-text");
-    const spinner = document.getElementById("generate-spinner");
+  function validateProject() {
+    const valid = projectName.value.trim().length > 0;
 
-    function validate() {
-      const valid =
-        projectName.value.trim() !== "" && rawNotes.value.trim() !== "";
+    if (!projectTouched) return valid;
 
-      if (valid) {
-        button.disabled = false;
+    projectError.classList.toggle("hidden", valid);
 
-        button.classList.remove("bg-[#B8C4E8]");
-        button.classList.add("bg-[#4F6BFF]", "hover:bg-[#4258E8]");
-      } else {
-        button.disabled = true;
+    projectName.classList.toggle("border-[#F04438]", !valid);
 
-        button.classList.remove("bg-[#4F6BFF]", "hover:bg-[#4258E8]");
+    return valid;
+  }
 
-        button.classList.add("bg-[#B8C4E8]");
-      }
+  projectName.addEventListener("blur", () => {
+    projectTouched = true;
+    validateProject();
+  });
+
+  function validateNotes() {
+    const valid = rawNotes.value.trim().length > 0;
+
+    if (!notesTouched) return valid;
+
+    notesError.classList.toggle("hidden", valid);
+
+    rawNotes.classList.toggle("border-[#F04438]", !valid);
+
+    return valid;
+  }
+
+  rawNotes.addEventListener("blur", () => {
+    notesTouched = true;
+    validateNotes();
+  });
+
+  function validate() {
+    const valid =
+      projectName.value.trim() !== "" && rawNotes.value.trim() !== "";
+
+    button.disabled = !valid;
+
+    if (valid) {
+      button.classList.remove("opacity-45");
+      button.classList.add("hover:bg-[#101828]");
+    } else {
+      button.classList.add("opacity-45");
+      button.classList.remove("hover:bg-[#101828]");
     }
-
-    projectName.addEventListener("input", validate);
-    rawNotes.addEventListener("input", validate);
-
+  }
+  projectName.addEventListener("input", () => {
     validate();
 
-    form.addEventListener("submit", () => {
-      button.disabled = true;
+    if (projectTouched) {
+      validateProject();
+    }
+  });
+  rawNotes.addEventListener("input", () => {
+    validate();
 
-      button.classList.remove("bg-[#4F6BFF]", "hover:bg-[#4258E8]");
+    if (notesTouched) {
+      validateNotes();
+    }
+  });
 
-      button.classList.add("bg-[#B8C4E8]");
+  validate();
 
-      spinner.classList.remove("hidden");
+  form.addEventListener("submit", function () {
+    button.disabled = true;
 
-      text.textContent = "Generating case fields...";
-    });
-  }
+    button.classList.add("opacity-45");
+    button.classList.remove("hover:bg-[#101828]");
+    button.textContent = "Generating...";
+
+    loadingState.classList.remove("hidden");
+    loadingState.classList.add("flex");
+  });
 </script>
 {% endblock %}
