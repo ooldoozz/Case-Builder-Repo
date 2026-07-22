@@ -1,3 +1,16 @@
+<style>
+  #autosave-success path { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  #autosave-success.animate-draw path { animation: draw-check .35s ease forwards .05s; }
+  @keyframes draw-check { to { stroke-dashoffset: 0; } }
+
+  @keyframes shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-3px); }
+    40%, 60% { transform: translateX(3px); }
+  }
+  #autosave-status.shake { animation: shake .4s; }
+</style>
 <nav
   class="sticky top-0 z-50 -mx-4 mb-0 border-b border-[#E4E7EC] bg-white/90 backdrop-blur"
 >
@@ -69,44 +82,48 @@
         {% endif %}
         <span
           id="autosave-status"
-          class="hidden items-center gap-2 rounded-full border border-[#D1FAE5] bg-[#ECFDF3] px-3 py-1 text-xs font-semibold text-[#15803D]"
+          class="opacity-0 scale-90 pointer-events-none inline-flex items-center rounded-full border border-[#D1FAE5] bg-[#ECFDF3] px-3 py-[0.3rem] text-xs font-semibold text-[#15803D] transition-all duration-300 ease-out overflow-hidden"
         >
-          <!-- Spinner -->
-          <div
-            id="autosave-spinner"
-            class="hidden h-4 w-4 animate-spin rounded-full border-[1.5px] border-current border-t-transparent"
-          ></div>
-
-          <!-- Success -->
-          <svg
-            id="autosave-success"
-            class="hidden h-4 w-4"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+          <span
+            class="relative flex h-4 w-4 items-center justify-center shrink-0"
           >
-            <path d="M5 10L8.5 13.5L15 7"></path>
-          </svg>
+            <div
+              id="autosave-spinner"
+              class="hidden h-4 w-4 animate-spin rounded-full border-[1.5px] border-current border-t-transparent"
+            ></div>
 
-          <!-- Error -->
-          <svg
-            id="autosave-error"
-            class="hidden h-4 w-4"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M6 6L14 14"></path>
-            <path d="M14 6L6 14"></path>
-          </svg>
+            <svg
+              id="autosave-success"
+              class="hidden h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 10L8.5 13.5L15 7" pathLength="1"></path>
+            </svg>
 
-          <span id="autosave-text"></span>
+            <svg
+              id="autosave-error"
+              class="hidden h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M6 6L14 14"></path>
+              <path d="M14 6L6 14"></path>
+            </svg>
+          </span>
+
+          <span
+            id="autosave-text"
+            class="ml-2 max-w-[90px] overflow-hidden whitespace-nowrap transition-all duration-300"
+          ></span>
         </span>
       </div>
     </div>

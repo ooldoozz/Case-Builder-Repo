@@ -218,81 +218,139 @@ limitation, reflection, or next step from the project." } %}
   const timers = {};
   const badge = document.getElementById("autosave-status");
   const text = document.getElementById("autosave-text");
-
   const spinner = document.getElementById("autosave-spinner");
   const success = document.getElementById("autosave-success");
-  const error = document.getElementById("autosave-error");
+  const errorIcon = document.getElementById("autosave-error");
+
+  const THEME = {
+    success: ["border-[#D1FAE5]", "bg-[#ECFDF3]", "text-[#15803D]"],
+    error: ["border-[#FECACA]", "bg-[#FEF2F2]", "text-[#B91C1C]"],
+  };
+  const ALL_THEME_CLASSES = [...THEME.success, ...THEME.error];
+
+  let hideTimer;
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // state: "pill" | "circle" | "hidden"
+  // icon:  "spinner" | "success" | "error" | null
+  function setBadge({ state, theme, label = "", icon = null }) {
+    clearTimeout(hideTimer);
+
+    badge.classList.remove(
+      "opacity-0",
+      "scale-90",
+      "pointer-events-none",
+      "px-3",
+      "py-[0.3rem]",
+      "p-[0.375rem]",
+      "w-7",
+      "shake",
+      ...ALL_THEME_CLASSES,
+    );
+
+    if (state === "hidden") {
+      badge.classList.add(
+        "opacity-0",
+        "scale-90",
+        "pointer-events-none",
+        "px-3",
+        "py-[0.3rem]",
+      );
+    } else if (state === "pill") {
+      badge.classList.add("px-3", "py-[0.3rem]");
+    } else if (state === "circle") {
+      badge.classList.add("p-[0.375rem]", "w-7");
+    }
+
+    text.classList.toggle("max-w-[90px]", state === "pill");
+    text.classList.toggle("ml-2", state === "pill");
+    text.classList.toggle("max-w-0", state !== "pill");
+    text.classList.toggle("ml-0", state !== "pill");
+
+    if (theme) badge.classList.add(...THEME[theme]);
+
+    spinner.classList.toggle("hidden", icon !== "spinner");
+    success.classList.toggle("hidden", icon !== "success");
+    errorIcon.classList.toggle("hidden", icon !== "error");
+
+    if (icon === "success") {
+      success.classList.remove("animate-draw");
+      void success.offsetWidth;
+      success.classList.add("animate-draw");
+    }
+
+    if (theme === "error") {
+      void badge.offsetWidth;
+      badge.classList.add("shake");
+    }
+
+    text.textContent = label;
+  }
+
+  function hideBadge(delay = 0) {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(
+      () => setBadge({ state: "hidden", theme: "success" }),
+      delay,
+    );
+  }
 
   document.querySelectorAll("textarea[data-key]").forEach((textarea) => {
     textarea.addEventListener("input", () => {
       clearTimeout(timers[textarea.dataset.key]);
-
-      badge.classList.add("hidden");
-      badge.classList.remove("inline-flex");
-
-      timers[textarea.dataset.key] = setTimeout(() => {
-        autoSave(textarea);
-      }, 5000);
+      hideBadge(0);
+      timers[textarea.dataset.key] = setTimeout(() => autoSave(textarea), 5000);
     });
   });
 
   async function autoSave(textarea) {
     const payload = {
-      result: {
-        [textarea.dataset.key]: {
-          content: textarea.value,
-        },
-      },
+      result: { [textarea.dataset.key]: { content: textarea.value } },
     };
 
-    // 2 ثانیه بعد از آخرین تایپ، وضعیت Saving... نمایش داده می‌شود
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await sleep(2000);
 
-    spinner.classList.remove("hidden");
-    success.classList.add("hidden");
-    error.classList.add("hidden");
+    setBadge({
+      state: "pill",
+      theme: "success",
+      label: "Saving...",
+      icon: "spinner",
+    });
 
-    badge.className =
-      "inline-flex items-center gap-2 rounded-full border border-[#D1FAE5] bg-[#ECFDF3] px-3 py-1 text-xs font-semibold text-[#15803D]";
+    await sleep(500);
 
-    text.textContent = "Saving...";
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    console.log("Saving field:", textarea.dataset.key);
-    console.log(payload);
+    console.log("Saving field:", textarea.dataset.key, payload);
 
     try {
       const response = await fetch(`/cases/{{ case.id }}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const data = await response.json();
-
       console.log(data);
 
-      spinner.classList.add("hidden");
-      success.classList.remove("hidden");
-      error.classList.add("hidden");
+      setBadge({
+        state: "pill",
+        theme: "success",
+        label: "Saved",
+        icon: "success",
+      });
 
-      badge.className =
-        "inline-flex items-center gap-2 rounded-full border border-[#D1FAE5] bg-[#ECFDF3] px-3 py-1 text-xs font-semibold text-[#15803D]";
-
-      text.textContent = "Saved";
-    } catch (error) {
-      console.error(error);
-      spinner.classList.add("hidden");
-      success.classList.add("hidden");
-      error.classList.remove("hidden");
-
-      badge.className =
-        "inline-flex items-center gap-2 rounded-full border border-[#FECACA] bg-[#FEF2F2] px-3 py-1 text-xs font-semibold text-[#B91C1C]";
-
-      text.textContent = "Failed";
+      setTimeout(() => {
+        setBadge({ state: "circle", theme: "success", icon: "success" });
+      }, 900);
+    } catch (err) {
+      console.error(err);
+      setBadge({
+        state: "pill",
+        theme: "error",
+        label: "Failed",
+        icon: "error",
+      });
     }
   }
 </script>
