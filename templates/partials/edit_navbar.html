@@ -75,7 +75,15 @@
           Archive
         </a>
 
-        <span class="text-[#D0D5DD]">/</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M6 3L10 8L6 13"
+          stroke="#98A2B3"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
 
         <span class="font-semibold text-[#101828]"> {{ case.title }} </span>
 
@@ -179,8 +187,9 @@
           Save
         </button>
 
-        <button
-          class="inline-flex items-center gap-2 rounded-lg bg-[#18233F] px-4 py-2 text-sm font-medium text-white hover:bg-[#0F1830]"
+        <a
+          href="/cases/{{ case.id }}/export"
+          class="inline-flex items-center gap-2 rounded-lg bg-[#18233F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0F1830]"
         >
           <svg
             width="15"
@@ -211,8 +220,9 @@
               stroke-linejoin="round"
             />
           </svg>
+
           Export
-        </button>
+        </a>
       </div>
     </div>
   </div>

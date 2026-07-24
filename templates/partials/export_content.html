@@ -1,0 +1,112 @@
+{% for section in sections %} {% if section.status == "complete" %} {% set
+badge_bg = "#ECFDF3" %} {% set badge_border = "#BBF7D0" %} {% set badge_text =
+"#007A55" %} {% set badge_label = "Complete" %} {% set badge_dot = "#00BC7D" %}
+{% elif section.status == "weak" %} {% set badge_bg = "#FFF7ED" %} {% set
+badge_border = "#FED7AA" %} {% set badge_text = "#C2410C" %} {% set badge_label
+= "Weak" %} {% set badge_dot = "#F59E0B" %} {% elif section.status == "unclear"
+%} {% set badge_bg = "#EFF6FF" %} {% set badge_border = "#BFDBFE" %} {% set
+badge_text = "#2563EB" %} {% set badge_label = "Unclear" %} {% set badge_dot =
+"#3B82F6" %} {% else %} {% set badge_bg = "#FEF2F2" %} {% set badge_border =
+"#FECACA" %} {% set badge_text = "#B42318" %} {% set badge_label = "Missing" %}
+{% set badge_dot = "#EF4444" %} {% endif %}
+
+<section
+  id="{{ section.key }}"
+  class="export-section scroll-mt-20 py-16 px-16 border-b border-[#EAECF0]"
+>
+  <div class="max-w-[920px]">
+    <div class="flex items-center gap-4 mb-10">
+      <h1 class="text-[44px] font-bold tracking-[-0.03em] text-[#101828]">
+        {{ section.title }}
+      </h1>
+
+      <span
+        class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold"
+        style="
+                      background: {{ badge_bg }};
+                      border-color: {{ badge_border }};
+                      color: {{ badge_text }};
+                  "
+      >
+        <span
+          class="w-2 h-2 rounded-full"
+          style="background: {{ badge_dot }}"
+        ></span>
+
+        {{ badge_label }}
+      </span>
+    </div>
+
+    {% if section.body %}
+
+    <div
+      class="prose prose-lg max-w-none prose-headings:text-[#101828] prose-p:text-[#344054] prose-p:leading-9 prose-p:text-[18px] prose-strong:text-[#101828]"
+    >
+      {% for paragraph in section.body.split("\n") %} {% if paragraph.strip() %}
+
+      <p class="mb-6 whitespace-pre-line">{{ paragraph }}</p>
+
+      {% endif %} {% endfor %}
+    </div>
+
+    {% else %}
+
+    <div
+      class="rounded-2xl border border-dashed border-[#D0D5DD] bg-[#F9FAFB] px-8 py-12"
+    >
+      <h3 class="text-lg font-semibold text-[#667085]">No content available</h3>
+
+      <p class="mt-2 text-[#98A2B3]">This section has no generated content.</p>
+    </div>
+
+    {% endif %}
+  </div>
+</section>
+
+{% endfor %}
+
+<script>
+  const sections = document.querySelectorAll(".export-section");
+  const navItems = document.querySelectorAll(".section-link");
+  const currentTitle = document.getElementById("current-section-title");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+
+        navItems.forEach((item) => {
+          item.classList.remove("bg-[#F2F4F7]", "text-[#101828]");
+        });
+
+        const active = document.querySelector(
+          `.section-link[data-target="${entry.target.id}"]`,
+        );
+
+        if (active) {
+          active.classList.add("bg-[#F2F4F7]", "text-[#101828]");
+
+          currentTitle.textContent = active
+            .querySelector("span:last-child")
+            .textContent.trim();
+        }
+      });
+    },
+    {
+      threshold: 0.45,
+    },
+  );
+
+  sections.forEach((section) => observer.observe(section));
+
+  navItems.forEach((item) => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      document.getElementById(item.dataset.target).scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  });
+</script>

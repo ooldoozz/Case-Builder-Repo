@@ -270,3 +270,68 @@ def archive(
             "cases": archive_cases,
         },
     )
+
+@page_router.get("/cases/{case_id}/export")
+def export_case(
+    request: Request,
+    case_id: int,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    result = json.loads(case.generated_json)
+
+    counts, progress = calculate_progress(result)
+
+    sections = []
+
+    for number, title, key in SECTION_DEFINITIONS:
+
+        field = result.get(key, {})
+
+        if not isinstance(field, dict):
+            field = {
+                "content": field,
+                "status": "missing",
+            }
+
+        sections.append(
+            {
+                "number": number,
+                "title": title,
+                "key": key,
+                "status": field.get("status", "missing"),
+                "body": field.get("content") or "",
+            }
+        )
+
+    issues_count = (
+        counts.get("weak", 0)
+        + counts.get("unclear", 0)
+        + counts.get("missing", 0)
+    )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="pages/export.html",
+        context={
+            "case": case,
+            "result": result,
+            "sections": sections,
+            "counts": counts,
+            "progress": progress,
+            "issues_count": issues_count,
+            "filled_sections": counts["complete"],
+            "total_sections": TOTAL_FIELDS,
+            "custom_navbar": "partials/export_navbar.html",
+        },
+    )

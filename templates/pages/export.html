@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="flex h-screen w-full flex-col">
+  <!-- زیر Header -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar سمت چپ -->
+    {% include "partials/export_sidebar.html" %}
+
+    <!-- محتوای اصلی سمت راست -->
+    <div class="flex flex-1 flex-col overflow-hidden">
+      <div class="flex-1 overflow-y-auto">
+        {% include "partials/export_content.html" %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const sections = document.querySelectorAll(".export-section");
+
+  const sidebarLinks = document.querySelectorAll(".section-link");
+
+  const currentTitle = document.getElementById("current-section-title");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+
+        sidebarLinks.forEach((link) => {
+          link.classList.remove("bg-[#F2F4F7]", "text-[#101828]");
+        });
+
+        const active = document.querySelector(
+          `.section-link[data-target="${entry.target.id}"]`,
+        );
+
+        if (active) {
+          active.classList.add("bg-[#F2F4F7]", "text-[#101828]");
+
+          const title = active.querySelector(".section-title");
+
+          if (title) {
+            currentTitle.textContent = title.textContent.trim();
+          }
+        }
+      });
+    },
+    {
+      threshold: 0.45,
+    },
+  );
+
+  sections.forEach((section) => observer.observe(section));
+
+  sidebarLinks.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      document.getElementById(link.dataset.target).scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  });
+</script>
+
+{% endblock %}

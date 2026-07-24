@@ -7,7 +7,9 @@
 <div class="max-w-[1376px] mx-auto pt-10 px-8 pb-10">
   <div class="flex items-center justify-between mb-6">
     <div class="flex flex-col gap-2 max-w-[760px]">
-      <h1 class="text-[32px] leading-[40px] font-semibold text-[#111827]">Saved cases</h1>
+      <h1 class="text-[32px] leading-[40px] font-semibold text-[#111827]">
+        Saved cases
+      </h1>
 
       <p class="text-base leading-6 text-[#667085]">
         Open a saved case study, continue editing it, or export when it's ready.
@@ -78,7 +80,9 @@
       </div>
     </div>
 
-    <div id="case-count" class="text-sm text-[#667085]">{{ cases|length }} cases</div>
+    <div id="case-count" class="text-sm text-[#667085]">
+      {{ cases|length }} cases
+    </div>
   </div>
 
   {% if cases %}
@@ -165,23 +169,42 @@
 
           {% if case.status == "complete" %}
 
-          <button
-            type="button"
-            class="inline-flex items-center justify-center gap-2 w-[104px] h-10 rounded-lg bg-[#18233F] text-xs font-medium text-white hover:bg-[#0F1830]"
+          <a
+              href="/cases/{{ case.id }}/export"
+              class="inline-flex items-center justify-center gap-2 w-[104px] h-10 rounded-lg bg-[#18233F] text-xs font-medium text-white transition hover:bg-[#0F1830]"
           >
-            <svg
-              class="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              <path d="M12 3v12"></path>
-              <path d="m7 10 5 5 5-5"></path>
-              <path d="M5 21h14"></path>
-            </svg>
+              <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 15 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+              >
+                  <path
+                      d="M13.125 9.375V11.875C13.125 12.2065 12.9933 12.5245 12.7589 12.7589C12.5245 12.9933 12.2065 13.125 11.875 13.125H3.125C2.79348 13.125 2.47554 12.9933 2.24112 12.7589C2.0067 12.5245 1.875 12.2065 1.875 11.875V9.375"
+                      stroke="white"
+                      stroke-width="1.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                  />
+                  <path
+                      d="M10.625 5L7.5 1.875L4.375 5"
+                      stroke="white"
+                      stroke-width="1.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                  />
+                  <path
+                      d="M7.5 1.875V9.375"
+                      stroke="white"
+                      stroke-width="1.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                  />
+              </svg>
 
-            Export
+              Export
+          </a>
           </button>
 
           {% endif %}
@@ -196,8 +219,12 @@
     id="case-no-results"
     class="hidden rounded-2xl border border-dashed border-[#D9DEE8] bg-white py-16 px-10 text-center"
   >
-    <p class="text-base font-semibold text-[#111827]">No cases match your search</p>
-    <p class="mt-1 text-sm text-[#667085]">Try a different keyword or filter.</p>
+    <p class="text-base font-semibold text-[#111827]">
+      No cases match your search
+    </p>
+    <p class="mt-1 text-sm text-[#667085]">
+      Try a different keyword or filter.
+    </p>
   </div>
 
   {% else %}
@@ -253,7 +280,12 @@
     let activeFilter = "all";
 
     const activeClasses = ["bg-[#F1F4F9]", "text-[#18233F]"];
-    const inactiveClasses = ["border", "border-[#D9DEE8]", "bg-white", "text-[#344054]"];
+    const inactiveClasses = [
+      "border",
+      "border-[#D9DEE8]",
+      "bg-white",
+      "text-[#344054]",
+    ];
 
     function setActiveButton(button) {
       filterButtons.forEach((btn) => {
@@ -272,7 +304,8 @@
       let visibleCount = 0;
 
       cards.forEach((card) => {
-        const matchesStatus = activeFilter === "all" || card.dataset.status === activeFilter;
+        const matchesStatus =
+          activeFilter === "all" || card.dataset.status === activeFilter;
         const matchesQuery = !query || card.dataset.title.includes(query);
         const isVisible = matchesStatus && matchesQuery;
 
