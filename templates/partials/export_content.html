@@ -1,22 +1,40 @@
-{% for section in sections %} {% if section.status == "complete" %} {% set
-badge_bg = "#ECFDF3" %} {% set badge_border = "#BBF7D0" %} {% set badge_text =
-"#007A55" %} {% set badge_label = "Complete" %} {% set badge_dot = "#00BC7D" %}
-{% elif section.status == "weak" %} {% set badge_bg = "#FFF7ED" %} {% set
-badge_border = "#FED7AA" %} {% set badge_text = "#C2410C" %} {% set badge_label
-= "Weak" %} {% set badge_dot = "#F59E0B" %} {% elif section.status == "unclear"
-%} {% set badge_bg = "#EFF6FF" %} {% set badge_border = "#BFDBFE" %} {% set
-badge_text = "#2563EB" %} {% set badge_label = "Unclear" %} {% set badge_dot =
-"#3B82F6" %} {% else %} {% set badge_bg = "#FEF2F2" %} {% set badge_border =
-"#FECACA" %} {% set badge_text = "#B42318" %} {% set badge_label = "Missing" %}
-{% set badge_dot = "#EF4444" %} {% endif %}
+{% for section in sections %}
+{% if section.status == "complete" %}
+    {% set badge_bg = "#ECFDF3" %}
+    {% set badge_border = "#BBF7D0" %}
+    {% set badge_text = "#15803D" %}
+    {% set badge_label = "Complete" %}
+    {% set status = "complete" %}
+
+{% elif section.status == "weak" %}
+    {% set badge_bg = "#FFF7ED" %}
+    {% set badge_border = "#FED7AA" %}
+    {% set badge_text = "#C2410C" %}
+    {% set badge_label = "Weak" %}
+    {% set status = "weak" %}
+
+{% elif section.status == "unclear" %}
+    {% set badge_bg = "#F5F3FF" %}
+    {% set badge_border = "#DDD6FE" %}
+    {% set badge_text = "#6D28D9" %}
+    {% set badge_label = "Unclear" %}
+    {% set status = "unclear" %}
+
+{% else %}
+    {% set badge_bg = "#FEF2F2" %}
+    {% set badge_border = "#FECACA" %}
+    {% set badge_text = "#B91C1C" %}
+    {% set badge_label = "Missing" %}
+    {% set status = "missing" %}
+{% endif %}
 
 <section
   id="{{ section.key }}"
-  class="export-section scroll-mt-20 py-16 px-16 border-b border-[#EAECF0]"
+  class="export-section snap-start h-screen py-24 px-24 border-b border-[#EAECF0] overflow-y-auto"
 >
-  <div class="max-w-[920px]">
+  <div class="max-w-[1100px] mx-auto">
     <div class="flex items-center gap-4 mb-10">
-      <h1 class="text-[44px] font-bold tracking-[-0.03em] text-[#101828]">
+      <h1 class="text-[38px] leading-tight font-bold tracking-[-0.03em] text-[#101828]">
         {{ section.title }}
       </h1>
 
@@ -28,10 +46,43 @@ badge_text = "#2563EB" %} {% set badge_label = "Unclear" %} {% set badge_dot =
                       color: {{ badge_text }};
                   "
       >
-        <span
-          class="w-2 h-2 rounded-full"
-          style="background: {{ badge_dot }}"
-        ></span>
+        <span class="shrink-0">
+        {% if status == "complete" %}
+
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M6.5 11.9167C9.49155 11.9167 11.9167 9.49155 11.9167 6.5C11.9167 3.50845 9.49155 1.08333 6.5 1.08333C3.50845 1.08333 1.08333 3.50845 1.08333 6.5C1.08333 9.49155 3.50845 11.9167 6.5 11.9167Z" stroke="#22C55E" stroke-width="1.083"/>
+        <path d="M4.875 6.5L5.95833 7.58333L8.125 5.41667" stroke="#22C55E" stroke-width="1.083"/>
+        </svg>
+
+        {% elif status == "weak" %}
+
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M2.7085 6.5H10.2918" stroke="#F59E0B" stroke-width="1.083" stroke-linecap="round"/>
+        </svg>
+
+        {% elif status == "unclear" %}
+
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M6.5 11.9167C9.49155 11.9167 11.9167 9.49155 11.9167 6.5C11.9167 3.50845 9.49155 1.08333 6.5 1.08333C3.50845 1.08333 1.08333 3.50845 1.08333 6.5C1.08333 9.49155 3.50845 11.9167 6.5 11.9167Z" stroke="#8B5CF6" stroke-width="1.083"/>
+        <path d="M4.92 4.875C5.05 4.51 5.30 4.20 5.63 4.01C5.96 3.82 6.35 3.74 6.73 3.81C7.11 3.88 7.45 4.07 7.70 4.36C7.95 4.66 8.08 5.03 8.08 5.41C8.08 6.5 6.45 7.04 6.45 7.04" stroke="#8B5CF6" stroke-width="1.083" stroke-linecap="round"/>
+        <path d="M6.5 9.208H6.505" stroke="#8B5CF6" stroke-width="1.083" stroke-linecap="round"/>
+        </svg>
+
+        {% else %}
+
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M5.47 1.18C6.15 1.05 6.84 1.05 7.52 1.18" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M7.52 11.81C6.84 11.95 6.15 11.95 5.47 11.81" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M9.53 2.01C10.11 2.40 10.60 2.90 10.99 3.47" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M1.18 7.52C1.05 6.84 1.05 6.15 1.18 5.47" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M10.98 9.53C10.59 10.11 10.09 10.60 9.52 10.99" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M11.81 5.47C11.95 6.15 11.95 6.84 11.81 7.52" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M2.01 3.46C2.40 2.88 2.90 2.39 3.47 2" stroke="#EF4444" stroke-width="1.083"/>
+        <path d="M3.46 10.98C2.88 10.59 2.39 10.09 2 9.52" stroke="#EF4444" stroke-width="1.083"/>
+        </svg>
+
+        {% endif %}
+        </span>
 
         {{ badge_label }}
       </span>
@@ -84,7 +135,11 @@ badge_text = "#2563EB" %} {% set badge_label = "Unclear" %} {% set badge_dot =
         );
 
         if (active) {
-          active.classList.add("bg-[#F2F4F7]", "text-[#101828]");
+          navItems.forEach((link) => {
+            link.classList.remove("bg-[#F2F4F7]", "shadow-sm");
+          });
+
+          active.classList.add("bg-[#F2F4F7]", "shadow-sm");
 
           currentTitle.textContent = active
             .querySelector("span:last-child")
@@ -93,7 +148,7 @@ badge_text = "#2563EB" %} {% set badge_label = "Unclear" %} {% set badge_dot =
       });
     },
     {
-      threshold: 0.45,
+      threshold: 0.8,
     },
   );
 
@@ -103,10 +158,45 @@ badge_text = "#2563EB" %} {% set badge_label = "Unclear" %} {% set badge_dot =
     item.addEventListener("click", (e) => {
       e.preventDefault();
 
-      document.getElementById(item.dataset.target).scrollIntoView({
+      const target = document.getElementById(item.dataset.target);
+
+      target.scrollIntoView({
         behavior: "smooth",
-        block: "start",
+        block: "nearest",
+        inline: "nearest",
       });
     });
   });
+  const container = document.getElementById("export-scroll");
+  const sections = [...document.querySelectorAll(".export-section")];
+
+  let current = 0;
+  let locked = false;
+
+  container.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+
+      if (locked) return;
+
+      locked = true;
+
+      if (e.deltaY > 0 && current < sections.length - 1) {
+        current++;
+      } else if (e.deltaY < 0 && current > 0) {
+        current--;
+      }
+
+      sections[current].scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      setTimeout(() => {
+        locked = false;
+      }, 700);
+    },
+    { passive: false },
+  );
 </script>

@@ -1,0 +1,561 @@
+{% set is_complete = (progress|default(0)) >= 100 %} {% set issues_count =
+(total_sections|default(0)) - (filled_sections|default(0)) %} 
+{% set quality_rows = [
+  {
+    "key": "missing",
+    "label": "Missing",
+    "dot": "#EF4444",
+    "text": "#B91C1C"
+  },
+  {
+    "key": "weak",
+    "label": "Weak",
+    "dot": "#F59E0B",
+    "text": "#C2410C"
+  },
+  {
+    "key": "unclear",
+    "label": "Unclear",
+    "dot": "#8B5CF6",
+    "text": "#6D28D9"
+  },
+  {
+    "key": "complete",
+    "label": "Complete",
+    "dot": "#22C55E",
+    "text": "#15803D"
+  }
+] %}
+{% set formats = [
+    {"id":"pdf","title":"PDF","description":"Perfect for sharing","enabled":true},
+    {"id":"word","title":"Word","description":"Easy to edit","enabled":true},
+    {"id":"figma","title":"Figma","description":"Coming soon","enabled":false},
+    {"id":"html","title":"HTML","description":"Coming soon","enabled":false},
+    {"id":"notion","title":"Notion","description":"Coming soon","enabled":false},
+    {"id":"share","title":"Share","description":"Coming soon","enabled":false}, ] 
+%}
+
+<!-- ============================================================= -->
+<!-- Step 1: Confirm export -->
+<!-- ============================================================= -->
+<div
+  id="confirm-modal"
+  class="export-modal-overlay hidden fixed inset-0 z-[999] items-center justify-center p-6"
+  style="background: rgba(16, 24, 40, 0.45)"
+>
+  <div
+    class="bg-white rounded-2xl border border-[#EAECF0] w-full max-w-[440px]"
+    style="box-shadow: 0 20px 60px rgba(16, 24, 40, 0.18)"
+  >
+    <div class="flex items-start justify-between px-8 pt-8">
+      <div class="flex-1 pr-4">
+        <h2 class="text-[19px] font-bold tracking-[-0.02em] text-[#101828]">
+          {{ "Ready to export" if is_complete else "Export your case study?" }}
+        </h2>
+        <p class="mt-2 text-[14px] leading-6 text-[#667085]">
+          {% if is_complete %} Your case study is complete and ready to use. {%
+          else %} Your case study still contains sections marked as Missing,
+          Weak or Unclear. You can export it now, but improving these sections
+          first will create a stronger portfolio presentation. {% endif %}
+        </p>
+      </div>
+      <button
+        type="button"
+        onclick="closeExportModals()"
+        class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F2F4F7] transition-colors"
+        aria-label="Close"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M12 4L4 12"
+            stroke="#667085"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <path
+            d="M4 4L12 12"
+            stroke="#667085"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div class="px-8 pt-6">
+      {% if is_complete %}
+      <div
+        class="rounded-xl border border-[#BBF7D0] bg-[#ECFDF3] px-5 py-4 flex items-start gap-3"
+      >
+        <span
+          class="w-5 h-5 rounded-full bg-[#BBF7D0] flex items-center justify-center shrink-0 mt-0.5"
+        >
+          <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+            <path
+              d="M6.5 11.9c3 0 5.4-2.4 5.4-5.4S9.5 1.1 6.5 1.1 1.1 3.5 1.1 6.5s2.4 5.4 5.4 5.4z"
+              stroke="#027A48"
+              stroke-width="1.1"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M4.9 6.5l1.1 1.1 2.2-2.2"
+              stroke="#027A48"
+              stroke-width="1.1"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <div>
+          <p class="text-[14px] font-semibold text-[#027A48]">
+            All required sections completed
+          </p>
+          <p class="text-[13px] mt-0.5 text-[#3F9C7A]">
+            {{ total_sections }} sections reviewed &middot; Ready for export
+          </p>
+        </div>
+      </div>
+      {% else %}
+      <div class="rounded-xl border border-[#EAECF0] overflow-hidden">
+        <div class="divide-y divide-[#EAECF0]">
+          {% for row in quality_rows %}
+          <div class="flex items-center justify-between px-5 py-3 bg-white">
+            <div class="flex items-center gap-2.5">
+              <span
+                class="w-1.5 h-1.5 rounded-full shrink-0"
+                style="background: {{ row.dot }};"
+              ></span>
+              <span class="text-[14px] text-[#344054]">{{ row.label }}</span>
+            </div>
+            <span
+              class="text-[14px] font-semibold tabular-nums"
+              style="color: {{ row.text }};"
+              >{{ counts[row.key]|default(0) }}</span
+            >
+          </div>
+          {% endfor %}
+        </div>
+        <div class="px-5 py-3 border-t border-[#EAECF0] bg-[#F9FAFB]">
+          <p class="text-[12.5px] leading-relaxed text-[#98A2B3]">
+            You can always come back and improve your case study later.
+          </p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="px-8 pt-6 pb-8 flex flex-col gap-2.5">
+      {% if is_complete %}
+      <button
+        type="button"
+        onclick="openExportModal('format')"
+        class="w-full h-11 rounded-xl text-white text-[14px] font-semibold bg-[#18233F] hover:bg-[#101828] transition-colors"
+      >
+        Choose Export Format
+      </button>
+      <button
+        type="button"
+        onclick="closeExportModals()"
+        class="w-full h-11 rounded-xl text-[14px] font-medium text-[#667085] hover:bg-[#F9FAFB] transition-colors"
+      >
+        Cancel
+      </button>
+      {% else %}
+      <button
+        type="button"
+        onclick="openExportModal('format')"
+        class="w-full h-11 rounded-xl text-white text-[14px] font-semibold bg-[#18233F] hover:bg-[#101828] transition-colors"
+      >
+        Export Anyway
+      </button>
+      <a
+        href="/cases/{{ case.id }}/edit"
+        class="flex w-full h-11 items-center justify-center rounded-xl border border-[#D0D5DD] text-[14px] font-medium text-[#101828] hover:bg-[#F9FAFB] transition-colors"
+      >
+        Review Issues
+      </a>
+      <button
+        type="button"
+        onclick="closeExportModals()"
+        class="w-full h-11 rounded-xl text-[14px] font-medium text-[#667085] hover:bg-[#F9FAFB] transition-colors"
+      >
+        Cancel
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- Step 2: Choose export format -->
+<!-- ============================================================= -->
+<div
+  id="format-modal"
+  class="export-modal-overlay hidden fixed inset-0 z-[999] items-center justify-center p-6"
+  style="background: rgba(16, 24, 40, 0.45)"
+>
+  <div
+    class="bg-white rounded-2xl border border-[#EAECF0] w-full max-w-[440px]"
+    style="box-shadow: 0 20px 60px rgba(16, 24, 40, 0.18)"
+  >
+    <div class="flex items-start justify-between px-8 pt-8">
+      <div>
+        <h2 class="text-[19px] font-bold tracking-[-0.02em] text-[#101828]">
+          Choose export format
+        </h2>
+        <p class="mt-1.5 text-[14px] leading-6 text-[#667085]">
+          Select where you'd like to export your case study.
+        </p>
+      </div>
+      <button
+        type="button"
+        onclick="closeExportModals()"
+        class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F2F4F7] transition-colors"
+        aria-label="Close"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M12 4L4 12"
+            stroke="#667085"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <path
+            d="M4 4L12 12"
+            stroke="#667085"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div class="px-8 pt-6">
+      <div class="grid grid-cols-3 gap-2.5">
+        {% for fmt in formats %}
+        <button
+          type="button"
+          class="format-option relative flex flex-col items-center text-center gap-2.5 px-3 py-4 rounded-xl border transition-all outline-none {% if fmt.enabled %} border-[#E4E7EC] bg-[#F9FAFB] hover:border-[#D0D5DD] {% else %} border-[#F2F4F7] bg-[#FCFCFD] opacity-45 cursor-not-allowed {% endif %}"
+          data-format="{{ fmt.id }}"
+          {% if fmt.enabled %}
+          onclick="selectExportFormat(this, '{{ fmt.id }}')"
+          {% endif %}
+        >
+          <span class="format-check absolute top-2 right-2 hidden">
+            <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+              <path
+                d="M6.5 11.9c3 0 5.4-2.4 5.4-5.4S9.5 1.1 6.5 1.1 1.1 3.5 1.1 6.5s2.4 5.4 5.4 5.4z"
+                stroke="#18233F"
+                stroke-width="1.1"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M4.9 6.5l1.1 1.1 2.2-2.2"
+                stroke="#18233F"
+                stroke-width="1.1"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <div
+            class="format-icon-box w-9 h-9 rounded-lg flex items-center justify-center border border-[#E4E7EC] bg-white text-[#344054]"
+          >
+            {% if not fmt.enabled %}
+            <span
+                class="absolute top-2 left-2 rounded-full bg-[#F2F4F7] px-2 py-0.5 text-[10px] font-semibold text-[#667085]"
+            >
+                Soon
+            </span>
+            {% endif %}
+            {% if fmt.id == "pdf" %}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 1.3H4a1.3 1.3 0 0 0-1.3 1.4v10.6A1.3 1.3 0 0 0 4 14.7h8a1.3 1.3 0 0 0 1.3-1.4V4.7L10 1.3z"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M9.3 1.3V4a1.3 1.3 0 0 0 1.4 1.3H13.3"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            {% elif fmt.id == "word" %}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 1.3H4a1.3 1.3 0 0 0-1.3 1.4v10.6A1.3 1.3 0 0 0 4 14.7h8a1.3 1.3 0 0 0 1.3-1.4V4.7L10 1.3z"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M5.5 9l1 3 1.2-2.4L8.9 12l1-3"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            {% elif fmt.id == "figma" %}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <rect
+                x="2.5"
+                y="2.5"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <rect
+                x="9"
+                y="2.5"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <rect
+                x="2.5"
+                y="9"
+                width="4.5"
+                height="4.5"
+                rx="1"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <circle
+                cx="11.25"
+                cy="11.25"
+                r="2.25"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+            </svg>
+            {% elif fmt.id == "html" %}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M5.5 4L2 8l3.5 4"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M10.5 4L14 8l-3.5 4"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            {% elif fmt.id == "notion" %}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M2.7 13V3a1.3 1.3 0 0 1 1.3-1.3h8.7v11.3H4a1.3 1.3 0 0 1-1.3-1.3z"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linejoin="round"
+              />
+            </svg>
+            {% else %}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <rect
+                x="5"
+                y="5"
+                width="9"
+                height="9"
+                rx="1.3"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <path
+                d="M2.5 10.5V3.3A1.3 1.3 0 0 1 3.8 2h7.2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
+            </svg>
+            {% endif %}
+          </div>
+          <div>
+            <p
+              class="format-title text-[13.5px] leading-tight font-semibold text-[#101828]"
+            >
+              {{ fmt.title }}
+            </p>
+            <p class="text-[11.5px] mt-0.5 leading-tight text-[#98A2B3]">
+              {{ fmt.description }}
+            </p>
+          </div>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="px-8 pt-6 pb-8 flex flex-col gap-2.5">
+      <div
+        id="format-exporting"
+        class="hidden h-11 items-center justify-center gap-2 rounded-xl bg-[#ECFDF3] border border-[#BBF7D0]"
+      >
+        <svg width="15" height="15" viewBox="0 0 13 13" fill="none">
+          <path
+            d="M6.5 11.9c3 0 5.4-2.4 5.4-5.4S9.5 1.1 6.5 1.1 1.1 3.5 1.1 6.5s2.4 5.4 5.4 5.4z"
+            stroke="#027A48"
+            stroke-width="1.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M4.9 6.5l1.1 1.1 2.2-2.2"
+            stroke="#027A48"
+            stroke-width="1.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span class="text-[14px] font-semibold text-[#027A48]"
+          >Exporting&hellip;</span
+        >
+      </div>
+      <button
+        type="button"
+        id="format-export-btn"
+        onclick="submitExportFormat()"
+        disabled
+        class="w-full h-11 rounded-xl text-white text-[14px] font-semibold transition-all"
+        style="background: rgba(24, 35, 63, 0.35); cursor: not-allowed"
+      >
+        Export
+      </button>
+      <button
+        type="button"
+        onclick="closeExportModals()"
+        class="w-full h-11 rounded-xl text-[14px] font-medium text-[#667085] hover:bg-[#F9FAFB] transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .export-modal-overlay.hidden {
+    display: none;
+  }
+  .export-modal-overlay:not(.hidden) {
+    display: flex;
+  }
+  #format-exporting:not(.hidden) {
+    display: flex;
+  }
+
+  .format-option.format-selected {
+    border-color: #18233f;
+    background-color: #f2f4f7;
+  }
+  .format-option.format-selected .format-icon-box {
+    background-color: #18233f;
+    border-color: #18233f;
+    color: #ffffff;
+  }
+  .format-option.format-selected .format-check {
+    display: inline-flex;
+  }
+
+  #format-export-btn:not(:disabled) {
+    background: #18233f;
+    cursor: pointer;
+
+  #format-export-btn:disabled{
+        background:rgba(24,35,63,.35);
+        cursor:not-allowed;
+  }
+
+  }
+  #format-export-btn:not(:disabled):hover {
+    background: #101828;
+  }
+</style>
+
+<script>
+  (function () {
+    var exportTriggerBtn = document.getElementById("download-pdf-btn");
+    if (exportTriggerBtn) {
+      exportTriggerBtn.addEventListener("click", function () {
+        openExportModal("confirm");
+      });
+    }
+  })();
+
+  function openExportModal(name) {
+    document.querySelectorAll(".export-modal-overlay").forEach(function (m) {
+      m.classList.add("hidden");
+    });
+    document.getElementById(name + "-modal").classList.remove("hidden");
+  }
+
+  function closeExportModals() {
+    document.querySelectorAll(".export-modal-overlay").forEach(function (m) {
+      m.classList.add("hidden");
+    });
+  }
+
+  var selectedExportFormat = null;
+
+  function selectExportFormat(el, id) {
+
+    document.querySelectorAll(".format-option").forEach((o)=>{
+        o.classList.remove("format-selected");
+    });
+
+    el.classList.add("format-selected");
+
+    selectedExportFormat=id;
+
+    const btn=document.getElementById("format-export-btn");
+
+    btn.disabled=false;
+
+    btn.style.background="linear-gradient(90deg, #18233F 0%, #101828 100%)";
+    btn.style.cursor="pointer";
+}
+
+  function submitExportFormat() {
+    if (!selectedExportFormat) return;
+
+    document.getElementById("format-export-btn").classList.add("hidden");
+    document.getElementById("format-exporting").classList.remove("hidden");
+
+    // TODO: replace with a real request to your export endpoint, e.g.
+    // fetch(`/cases/{{ case.id }}/export/${selectedExportFormat}`, { method: "POST" })
+    //   .then(...)
+    setTimeout(function () {
+      closeExportModals();
+      document.getElementById("format-export-btn").classList.remove("hidden");
+      document.getElementById("format-exporting").classList.add("hidden");
+      document.getElementById("format-export-btn").disabled = true;
+      selectedExportFormat = null;
+      document.querySelectorAll(".format-option").forEach(function (o) {
+        o.classList.remove("format-selected");
+      });
+
+      if (window.showToast) {
+        showToast({
+          type: "success",
+          title: "Export complete",
+          description: "Your case study export has started.",
+        });
+      }
+    }, 900);
+  }
+</script>

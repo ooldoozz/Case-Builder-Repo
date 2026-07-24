@@ -7,14 +7,16 @@
     {% include "partials/export_sidebar.html" %}
 
     <!-- محتوای اصلی سمت راست -->
-    <div class="flex flex-1 flex-col overflow-hidden">
-      <div class="flex-1 overflow-y-auto">
-        {% include "partials/export_content.html" %}
-      </div>
+    <div
+      class="flex-1 overflow-y-auto snap-y snap-mandatory"
+      id="export-scroll"
+    >
+      {% include "partials/export_content.html" %}
     </div>
   </div>
 </div>
 
+{% include "partials/export_modals.html" %}
 <script>
   const sections = document.querySelectorAll(".export-section");
 

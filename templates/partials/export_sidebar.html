@@ -14,24 +14,6 @@
             {{ case.title }}
         </h1>
 
-        <!-- <div class="mt-4 flex items-center gap-2">
-
-            <span
-                class="inline-flex items-center rounded-full bg-[#EEF4FF] px-3 py-1 text-[12px] font-medium text-[#3538CD]"
-            >
-                Product Designer
-            </span>
-
-            <span class="text-[#D0D5DD]">
-                •
-            </span>
-
-            <span class="text-[13px] text-[#667085]">
-                Version {{ case.version }}
-            </span>
-
-        </div> -->
-
     </div>
 
     <!-- Navigation -->
@@ -51,32 +33,32 @@
                 {% for section in sections %}
 
                 {% if section.status == "complete" %}
-                    {% set dot = "#00BC7D" %}
-                    {% set bg = "#ECFDF3" %}
-                    {% set border = "#BBF7D0" %}
-                    {% set text = "#027A48" %}
-                    {% set label = "Complete" %}
+                    {% set badge_bg = "#ECFDF3" %}
+                    {% set badge_border = "#BBF7D0" %}
+                    {% set badge_text = "#15803D" %}
+                    {% set badge_label = "Complete" %}
+                    {% set status = "complete" %}
 
                 {% elif section.status == "weak" %}
-                    {% set dot = "#F59E0B" %}
-                    {% set bg = "#FFF7ED" %}
-                    {% set border = "#FED7AA" %}
-                    {% set text = "#C2410C" %}
-                    {% set label = "Weak" %}
+                    {% set badge_bg = "#FFF7ED" %}
+                    {% set badge_border = "#FED7AA" %}
+                    {% set badge_text = "#C2410C" %}
+                    {% set badge_label = "Weak" %}
+                    {% set status = "weak" %}
 
                 {% elif section.status == "unclear" %}
-                    {% set dot = "#3B82F6" %}
-                    {% set bg = "#EFF6FF" %}
-                    {% set border = "#BFDBFE" %}
-                    {% set text = "#2563EB" %}
-                    {% set label = "Unclear" %}
+                    {% set badge_bg = "#F5F3FF" %}
+                    {% set badge_border = "#DDD6FE" %}
+                    {% set badge_text = "#6D28D9" %}
+                    {% set badge_label = "Unclear" %}
+                    {% set status = "unclear" %}
 
                 {% else %}
-                    {% set dot = "#EF4444" %}
-                    {% set bg = "#FEF2F2" %}
-                    {% set border = "#FECACA" %}
-                    {% set text = "#B42318" %}
-                    {% set label = "Missing" %}
+                    {% set badge_bg = "#FEF2F2" %}
+                    {% set badge_border = "#FECACA" %}
+                    {% set badge_text = "#B91C1C" %}
+                    {% set badge_label = "Missing" %}
+                    {% set status = "missing" %}
                 {% endif %}
 
                 <a
@@ -85,10 +67,43 @@
                     class="section-link group flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 hover:bg-[#F9FAFB]"
                 >
 
-                    <span
-                        class="h-2.5 w-2.5 rounded-full shrink-0"
-                        style="background: {{ dot }}"
-                    ></span>
+                    <span class="shrink-0">
+                    {% if status == "complete" %}
+
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <path d="M6.5 11.9167C9.49155 11.9167 11.9167 9.49155 11.9167 6.5C11.9167 3.50845 9.49155 1.08333 6.5 1.08333C3.50845 1.08333 1.08333 3.50845 1.08333 6.5C1.08333 9.49155 3.50845 11.9167 6.5 11.9167Z" stroke="#22C55E" stroke-width="1.083"/>
+                    <path d="M4.875 6.5L5.95833 7.58333L8.125 5.41667" stroke="#22C55E" stroke-width="1.083"/>
+                    </svg>
+
+                    {% elif status == "weak" %}
+
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <path d="M2.7085 6.5H10.2918" stroke="#F59E0B" stroke-width="1.083" stroke-linecap="round"/>
+                    </svg>
+
+                    {% elif status == "unclear" %}
+
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <path d="M6.5 11.9167C9.49155 11.9167 11.9167 9.49155 11.9167 6.5C11.9167 3.50845 9.49155 1.08333 6.5 1.08333C3.50845 1.08333 1.08333 3.50845 1.08333 6.5C1.08333 9.49155 3.50845 11.9167 6.5 11.9167Z" stroke="#8B5CF6" stroke-width="1.083"/>
+                    <path d="M4.92 4.875C5.05 4.51 5.30 4.20 5.63 4.01C5.96 3.82 6.35 3.74 6.73 3.81C7.11 3.88 7.45 4.07 7.70 4.36C7.95 4.66 8.08 5.03 8.08 5.41C8.08 6.5 6.45 7.04 6.45 7.04" stroke="#8B5CF6" stroke-width="1.083" stroke-linecap="round"/>
+                    <path d="M6.5 9.208H6.505" stroke="#8B5CF6" stroke-width="1.083" stroke-linecap="round"/>
+                    </svg>
+
+                    {% else %}
+
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <path d="M5.47 1.18C6.15 1.05 6.84 1.05 7.52 1.18" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M7.52 11.81C6.84 11.95 6.15 11.95 5.47 11.81" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M9.53 2.01C10.11 2.40 10.60 2.90 10.99 3.47" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M1.18 7.52C1.05 6.84 1.05 6.15 1.18 5.47" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M10.98 9.53C10.59 10.11 10.09 10.60 9.52 10.99" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M11.81 5.47C11.95 6.15 11.95 6.84 11.81 7.52" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M2.01 3.46C2.40 2.88 2.90 2.39 3.47 2" stroke="#EF4444" stroke-width="1.083"/>
+                    <path d="M3.46 10.98C2.88 10.59 2.39 10.09 2 9.52" stroke="#EF4444" stroke-width="1.083"/>
+                    </svg>
+
+                    {% endif %}
+                    </span>
 
                     <div class="min-w-0 flex-1">
 
