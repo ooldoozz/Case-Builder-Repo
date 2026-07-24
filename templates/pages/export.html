@@ -1,70 +1,155 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
 
-<div class="flex h-screen w-full flex-col">
-  <!-- زیر Header -->
+{% block content %}
+
+<div class="flex h-[calc(100vh-72px)] flex-col overflow-hidden">
+
   <div class="flex flex-1 overflow-hidden">
-    <!-- Sidebar سمت چپ -->
+
     {% include "partials/export_sidebar.html" %}
 
-    <!-- محتوای اصلی سمت راست -->
-    <div
-      class="flex-1 overflow-y-auto snap-y snap-mandatory"
+    <main
       id="export-scroll"
+      class="flex-1 overflow-y-auto snap-y snap-mandatory scroll-smooth"
     >
       {% include "partials/export_content.html" %}
-    </div>
+    </main>
+
   </div>
+
 </div>
 
 {% include "partials/export_modals.html" %}
+
 <script>
-  const sections = document.querySelectorAll(".export-section");
+const container = document.getElementById("export-scroll");
 
-  const sidebarLinks = document.querySelectorAll(".section-link");
+const sections = [...document.querySelectorAll(".export-section")];
 
-  const currentTitle = document.getElementById("current-section-title");
+const sidebarLinks = [...document.querySelectorAll(".section-link")];
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
+const currentTitle = document.getElementById("current-section-title");
 
-        sidebarLinks.forEach((link) => {
-          link.classList.remove("bg-[#F2F4F7]", "text-[#101828]");
-        });
+let current = 0;
 
-        const active = document.querySelector(
-          `.section-link[data-target="${entry.target.id}"]`,
+/* ----------------------------------
+   Sidebar Active State
+----------------------------------- */
+
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+
+      current = sections.indexOf(entry.target);
+
+      sidebarLinks.forEach((link) => {
+        link.classList.remove(
+          "bg-[#F2F4F7]",
+          "text-[#101828]",
+          "shadow-sm"
         );
-
-        if (active) {
-          active.classList.add("bg-[#F2F4F7]", "text-[#101828]");
-
-          const title = active.querySelector(".section-title");
-
-          if (title) {
-            currentTitle.textContent = title.textContent.trim();
-          }
-        }
       });
-    },
-    {
-      threshold: 0.45,
-    },
-  );
 
-  sections.forEach((section) => observer.observe(section));
+      const active = document.querySelector(
+        `.section-link[data-target="${entry.target.id}"]`
+      );
 
-  sidebarLinks.forEach((link) => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
+      if (!active) return;
 
-      document.getElementById(link.dataset.target).scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      active.classList.add(
+        "bg-[#F2F4F7]",
+        "text-[#101828]",
+        "shadow-sm"
+      );
+
+      const title = active.querySelector(".section-title");
+
+      if (title) {
+        currentTitle.textContent = title.textContent.trim();
+      }
+    });
+  },
+  {
+    root: container,
+    threshold: 0.5,
+  }
+);
+
+sections.forEach((section) => observer.observe(section));
+
+/* ----------------------------------
+   Sidebar Navigation
+----------------------------------- */
+
+sidebarLinks.forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    const target = document.getElementById(link.dataset.target);
+
+    if (!target) return;
+
+    container.scrollTo({
+      top: target.offsetTop,
+      behavior: "smooth",
     });
   });
+});
+
+/* ----------------------------------
+   Sync current index
+----------------------------------- */
+
+container.addEventListener("scroll", () => {
+  const scrollTop = container.scrollTop;
+
+  sections.forEach((section, index) => {
+    if (
+      scrollTop >= section.offsetTop - 80 &&
+      scrollTop < section.offsetTop + section.offsetHeight - 80
+    ) {
+      current = index;
+    }
+  });
+});
+
+/* ----------------------------------
+   Section Snap Wheel
+----------------------------------- */
+
+let locked = false;
+
+container.addEventListener(
+  "wheel",
+  (e) => {
+    e.preventDefault();
+
+    if (locked) return;
+
+    locked = true;
+
+    if (e.deltaY > 0 && current < sections.length - 1) {
+      current++;
+    }
+
+    if (e.deltaY < 0 && current > 0) {
+      current--;
+    }
+
+    container.scrollTo({
+      top: sections[current].offsetTop,
+      behavior: "smooth",
+    });
+
+    setTimeout(() => {
+      locked = false;
+    }, 650);
+  },
+  {
+    passive: false,
+  }
+);
 </script>
 
 {% endblock %}
