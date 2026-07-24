@@ -84,6 +84,18 @@ When information is both incomplete and ambiguous, use Unclear.
 
 When uncertain whether a field should be Weak or Unclear, choose Unclear.
 
+PORTFOLIO QUALITY PRINCIPLE
+
+Complete represents portfolio-ready quality.
+
+Weak represents information that is understandable but still requires additional explanation before it would be convincing in a professional UX portfolio.
+
+When deciding between Complete and Weak, ask:
+
+"Would an experienced hiring manager probably request more explanation before accepting this section?"
+
+If YES, choose Weak.
+
 STATUS DEFINITIONS
 
 Missing
@@ -101,16 +113,27 @@ Rules:
 
 Complete
 
-Use Complete only when the information:
+Use Complete only when ALL of the following are true:
 
-* Is explicitly stated.
-* Has one clear interpretation.
-* Has clear scope and meaning.
-* Identifies the relevant subject, action, or result.
-* Contains enough essential detail to be used confidently in a professional Product Design case study.
-* Does not require important clarification.
+* The information is explicitly stated.
+* It has only one clear interpretation.
+* The subject, ownership, scope, and meaning are clear.
+* The information contains sufficient practical detail for a hiring manager to understand the case study without asking immediate follow-up questions.
+* Important claims are supported by enough surrounding context.
+* The information feels portfolio-ready without requiring significant expansion.
 
-Do not use Complete merely because a sentence exists.
+Do NOT use Complete simply because the sentence is understandable.
+
+If a reviewer would naturally ask:
+- How?
+- Why?
+- Based on what?
+- Which users?
+- Which part?
+- What evidence supports this?
+
+and the answer is not already present,
+prefer Weak instead of Complete.
 
 Weak
 
@@ -373,6 +396,18 @@ REQUIRED JSON SCHEMA
 }
 }
 
+GLOBAL COMPLETENESS RULE
+
+Across every field, Complete should be relatively uncommon.
+
+A field should be marked Complete only when it contains enough information to stand on its own with minimal reviewer questions.
+
+Information that is merely understandable is usually Weak.
+
+The presence of a statement alone is never sufficient for Complete.
+
+When deciding between Weak and Complete, prefer Weak unless the field demonstrates clear completeness.
+
 FIELD DEFINITIONS AND FIELD-SPECIFIC STATUS RULES
 
 project_overview
@@ -410,8 +445,12 @@ Extract the explicitly stated user or business problem.
 Complete:
 
 * The problem is specific and clearly described.
-* The affected experience, behavior, or business issue is identifiable.
-* Why the problem mattered is reasonably clear.
+* The affected users or business are identifiable.
+* Why the problem mattered is clear.
+* The problem is supported by observable behavior, research findings, or other explicit context.
+
+If the problem is understandable but lacks supporting context or evidence,
+prefer Weak.
 
 Weak:
 
@@ -482,6 +521,7 @@ Complete:
 
 * The users are clearly identified.
 * Relevant usage context, needs, or circumstances are clearly stated.
+* Both the user group and their relevant context or needs are clearly described.
 
 Weak:
 
@@ -520,6 +560,9 @@ Complete:
 * The research method is clear.
 * The source or participants are clear.
 * The activity or relevant finding is sufficiently specific.
+* The research method is explicit.
+* Participants or data source are identified.
+* At least one meaningful finding is stated.
 
 Weak:
 
@@ -555,6 +598,7 @@ Complete:
 
 * The decision is clear.
 * The reason, evidence, trade-off, constraint, or intended benefit is clearly stated.
+* Both the decision and the reasoning are explicitly connected.
 
 Weak:
 
@@ -590,6 +634,7 @@ Keep solution separate from goals, reasoning, and impact.
 Complete:
 
 * The implemented solution is specific and clearly described.
+* The implemented changes are concrete enough that another designer could understand what was actually built.
 
 Weak:
 
@@ -634,6 +679,7 @@ Complete:
 * A specific post-solution outcome or metric is stated.
 * The result is clearly connected to the solution.
 * The measurement or validation context is sufficiently clear.
+* The outcome is clearly observed or validated and is directly connected to the implemented solution.
 
 Weak:
 
@@ -668,6 +714,7 @@ Complete:
 
 * A specific and meaningful lesson is clearly stated.
 * The lesson is connected to the project experience.
+* The lesson is specific and directly connected to the project rather than being generic design advice.
 
 Weak:
 
