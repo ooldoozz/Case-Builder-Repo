@@ -5,31 +5,26 @@
 "label": "Unclear", "bg": "#F5F3FF", "border": "#DDD6FE", "text": "#6D28D9",
 "dot": "#8B5CF6" }, "missing": { "label": "Missing", "bg": "#FEF2F2", "border":
 "#FECACA", "text": "#B91C1C", "dot": "#EF4444" } } %} {% set helper_text = {
-"project_overview": { "missing":"Add a short summary describing the project and
-its objective.", "weak":"The overview needs more context about the project.",
+"project_overview": { "missing":"Add the project goal and explain why this work was needed.", "weak":"The overview needs more context about the project.",
 "unclear":"The project overview is not clearly written." }, "problem": {
-"missing":"Describe the main user or business problem.", "weak":"Add more
+"missing":"Describe the core user or business problem this project addressed.", "weak":"Add more
 context about the affected user or business impact.", "unclear":"The affected
 user and importance of the problem are not clearly explained." }, "my_role": {
-"missing":"Describe your role and responsibilities.", "weak":"Add more detail
+"missing":"Describe your specific role and what you were responsible for.", "weak":"Add more detail
 about your contribution.", "unclear":"Your exact responsibilities and
-contribution are not clearly defined." }, "users_context": { "missing":"Describe
-the target users and product context.", "weak":"Add more information about the
-target users, context, or product constraints.", "unclear":"The target users or
-context are not clearly described." }, "research": { "missing":"No user
-research, evidence, observation, or supporting data was provided.", "weak":"Add
+contribution are not clearly defined." }, "users_context": { "missing":"Describe who the users are and the context they work in.", "weak":"Add more
+information about the target users, context, or product constraints.", "unclear":"The target users or
+context are not clearly described." }, "research": { "missing":"Add at least one piece of evidence: a quote, metric, or observation.", "weak":"Add
 research evidence, user feedback, analytics, or observations.",
 "unclear":"Research activities are mentioned but not clearly explained." },
-"key_ux_decisions": { "missing":"Explain the important UX decisions that were
-made.", "weak":"Explain why the main design decisions were selected.",
+"key_ux_decisions": { "missing":"Describe the most important design decision you made and why.",
+"weak":"Explain why the main design decisions were selected.",
 "unclear":"The reasoning behind the UX decisions is unclear." }, "solution": {
-"missing":"Describe the final solution.", "weak":"Add more implementation
+"missing":"Describe what you built or designed as the final solution.", "weak":"Add more implementation
 details.", "unclear":"The implemented solution is not clearly explained." },
-"impact": { "missing":"Add a measurable result, metric, behavior change, or
-defensible outcome.", "weak":"Add measurable results or explain why metrics are
+"impact": { "missing":"Add a measurable result, outcome, or a clear proxy if metrics are unavailable.", "weak":"Add measurable results or explain why metrics are
 unavailable.", "unclear":"The project outcome is not clearly measurable." },
-"what_i_learned": { "missing":"Add the main learning, limitation, or reflection
-from the project.", "weak":"Expand on what you learned during the project.",
+"what_i_learned": { "missing":"Add the most important thing you learned or would do differently.", "weak":"Expand on what you learned during the project.",
 "unclear":"The learning outcome is not clearly expressed." } } %} {% set
 placeholders = { "project_overview":"Write a short overview of the project...",
 "problem":"Describe the main problem...", "my_role":"Describe your role...",
@@ -38,14 +33,29 @@ research evidence, user feedback, observations, analytics, or supporting
 data...", "key_ux_decisions":"Explain the important UX decisions...",
 "solution":"Describe the implemented solution...", "impact":"Describe measurable
 results or expected outcomes...", "what_i_learned":"Add the main learning,
-limitation, reflection, or next step from the project." } %}
+limitation, reflection, or next step from the project." } %} {% set why_text = {
+"project_overview": "A clear overview is the first thing a reviewer reads. It sets expectations for the whole case study. Without it, even strong work later can feel ungrounded or hard to follow.",
+"problem": "The problem statement shows you understand the user or business need that drove the work. A vague problem statement suggests the design decisions that follow may lack strategic grounding.",
+"my_role": "Hiring managers need to understand your specific contribution — not just what the team did. Without this, it's impossible to evaluate your skills and level of ownership.",
+"users_context": "Design decisions only make sense in context. Describing who the users are and what environment they work in shows you grounded your work in real constraints rather than assumptions.",
+"research": "Evidence shows you didn't design from intuition alone. Even a single observation or user quote demonstrates you validated your assumptions before committing to a direction.",
+"key_ux_decisions": "Describing the decisions — not just the final design — shows your thinking process. This is often what separates junior and senior designers in a portfolio review.",
+"solution": "The solution section is evidence that you delivered something. Without a clear description, reviewers can't evaluate the quality or complexity of what you built.",
+"impact": "Outcomes are the strongest signal of project value. Even qualitative evidence — like a change in user behaviour — is better than leaving this blank.",
+"what_i_learned": "Reflection shows self-awareness and growth mindset. It also reassures reviewers that you learn from each project rather than repeating the same approach."
+} %} {% set status_legend_desc = {
+"complete": "Clear and sufficiently detailed",
+"weak": "Information exists, but needs stronger detail or evidence",
+"missing": "Required information has not been provided",
+"unclear": "Information exists, but its meaning or context is not clear"
+} %}
 
-<div class="max-w-[1320px] mx-auto px-5 pb-12">
+<div class="max-w-[1320px] mx-auto px-5 pt-8 pb-12">
   <div class="flex items-start justify-between">
     <div>
-      <h1 class="text-[40px] font-bold text-[#101828]">{{ case.title }}</h1>
+      <h1 class="text-[40px] leading-[50px] font-bold text-[#101828]">{{ case.title }}</h1>
 
-      <p class="mt-2 text-[16px] text-[#667085]">
+      <p class="mt-2 max-w-[840px] text-[16px] leading-6 text-[#667085]">
         Review and edit each field. Sections marked Missing or Unclear need
         attention before your case study is ready.
       </p>
@@ -64,7 +74,7 @@ limitation, reflection, or next step from the project." } %}
               {{ section.number }}
             </span>
 
-            <h3 class="text-[18px] font-semibold text-[#101828]">
+            <h3 class="text-[18px] leading-[27px] font-semibold text-[#101828]">
               {{ section.title }}
             </h3>
           </div>
@@ -83,26 +93,92 @@ limitation, reflection, or next step from the project." } %}
           </span>
         </div>
 
-        <div class="px-6 pb-6">
+        <div class="px-6 pb-5">
           <textarea
             name="{{ section.key }}"
             data-key="{{ section.key }}"
             rows="4"
             placeholder="{{ placeholders[section.key] }}"
-            class="w-full resize-none rounded-xl border border-[#D0D5DD] bg-white px-4 py-3 text-[14px] leading-6 text-[#344054] placeholder:text-[#98A2B3] outline-none focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/10"
+            class="w-full resize-none rounded-[14px] border border-[#D0D5DD] bg-white px-4 py-3 text-[14px] leading-6 text-[#344054] placeholder:text-[#98A2B3] outline-none focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/10"
           >
 {{ section.body }}</textarea
           >
         </div>
+
+        <div
+          id="field-helper-{{ section.key }}"
+          class="flex flex-col gap-2 px-6 pb-5"
+          {% if section.status == "complete" %}style="display: none;"{% endif %}
+        >
+          <div class="flex items-start gap-2">
+            <svg
+              class="mt-0.5 h-3.5 w-3.5 flex-none text-[#B91C1C]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              ></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+
+            <p class="text-xs leading-5 text-[#667085]">
+              <span id="field-helper-text-{{ section.key }}">
+                {% if section.status != "complete" %}{{ helper_text[section.key][section.status] }}{% endif %}
+              </span>
+              <span
+                id="field-why-toggle-{{ section.key }}"
+                data-key="{{ section.key }}"
+                class="field-why-toggle ml-1 cursor-pointer text-xs font-medium text-[#98A2B3] underline"
+              >
+                Why?
+              </span>
+            </p>
+          </div>
+
+          <div
+            id="field-why-box-{{ section.key }}"
+            class="hidden ml-[22px] rounded-xl bg-[#F9FAFB] px-4 py-3"
+          >
+            <p class="text-xs leading-5 text-[#475467]">
+              {{ why_text[section.key] }}
+            </p>
+          </div>
+        </div>
+
+        <!-- <div class="px-6 pb-5">
+          <div class="flex items-center justify-between rounded-[10px] border border-dashed border-[#D0D5DD] bg-white px-3 py-3">
+            <div class="flex items-center gap-2">
+              <svg
+                class="h-4 w-4 text-[#667085]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M12 3v12"></path>
+                <path d="m7 8 5-5 5 5"></path>
+                <path d="M5 21h14"></path>
+              </svg>
+
+              <span class="text-xs font-medium text-[#344054]">Add visual evidence</span>
+            </div>
+
+            <span class="text-[11px] font-medium text-[#98A2B3]">0 / 4</span>
+          </div>
+        </div> -->
       </div>
 
       {% endfor %}
     </div>
 
-    <div class="sticky top-6 space-y-6">
-      <div class="rounded-xl border border-[#E4E7EC] p-5 mb-6 bg-white p-6">
+    <div class="sticky top-6 space-y-5">
+      <div class="rounded-[14px] border border-[#E4E7EC] bg-white p-6">
         <div class="flex items-center justify-between">
-          <h2 class="text-[18px] font-semibold text-[#101828]">Progress</h2>
+          <h2 class="text-[18px] leading-[27px] font-semibold text-[#101828]">Progress</h2>
 
           <span
             id="case-progress-count"
@@ -139,96 +215,170 @@ limitation, reflection, or next step from the project." } %}
           {{ progress }}% Complete
         </div>
       </div>
+
       <div class="rounded-2xl border border-[#E4E7EC] bg-white p-6">
-        <h2 class="text-[18px] font-semibold text-[#101828]">
-          Missing Info Checklist
+        <h2 class="text-[15px] leading-[22px] font-semibold text-[#101828]">
+          Status summary
         </h2>
 
-        <p class="mt-2 text-[13px] leading-5 text-[#667085]">
-          Review the sections that are missing, weak, or unclear before
-          finalising your case study.
-        </p>
-
-        <div class="mt-6 grid grid-cols-2 gap-3">
+        <div class="mt-4 grid grid-cols-2 gap-3">
           <div
-            class="rounded-full border border-[#BBF7D0] bg-[#ECFDF3] px-4 py-2 text-sm font-medium text-[#15803D]"
+            class="flex items-center gap-2 rounded-full border border-[#BBF7D0] bg-[#ECFDF3] px-4 py-2 text-xs font-medium text-[#15803D]"
           >
-            {{ counts.complete }} Complete
+            <span class="h-1.5 w-1.5 flex-none rounded-full bg-[#22C55E]"></span>
+            <span id="summary-count-complete">{{ counts.complete }}</span>&nbsp;Complete
           </div>
 
           <div
-            class="rounded-full border border-[#FED7AA] bg-[#FFF7ED] px-4 py-2 text-sm font-medium text-[#C2410C]"
+            class="flex items-center gap-2 rounded-full border border-[#FED7AA] bg-[#FFF7ED] px-4 py-2 text-xs font-medium text-[#C2410C]"
           >
-            {{ counts.weak }} Weak
+            <span class="h-1.5 w-1.5 flex-none rounded-full bg-[#F59E0B]"></span>
+            <span id="summary-count-weak">{{ counts.weak }}</span>&nbsp;Weak
           </div>
 
           <div
-            class="rounded-full border border-[#FECACA] bg-[#FEF2F2] px-4 py-2 text-sm font-medium text-[#B91C1C]"
+            class="flex items-center gap-2 rounded-full border border-[#FECACA] bg-[#FEF2F2] px-4 py-2 text-xs font-medium text-[#B91C1C]"
           >
-            {{ counts.missing }} Missing
+            <span class="h-1.5 w-1.5 flex-none rounded-full bg-[#EF4444]"></span>
+            <span id="summary-count-missing">{{ counts.missing }}</span>&nbsp;Missing
           </div>
 
           <div
-            class="rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-2 text-sm font-medium text-[#6D28D9]"
+            class="flex items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-2 text-xs font-medium text-[#6D28D9]"
           >
-            {{ counts.unclear }} Unclear
+            <span class="h-1.5 w-1.5 flex-none rounded-full bg-[#8B5CF6]"></span>
+            <span id="summary-count-unclear">{{ counts.unclear }}</span>&nbsp;Unclear
           </div>
         </div>
 
-        <div class="mt-8 space-y-6">
+        <button
+          type="button"
+          id="status-legend-toggle"
+          class="mt-4 flex w-full items-center justify-between gap-1.5 border-t border-[#F2F4F7] pt-4 text-xs font-medium text-[#667085]"
+        >
+          <span class="flex items-center gap-1.5">
+            <svg
+              class="h-3 w-3 flex-none"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+
+            <span>What do these statuses mean?</span>
+          </span>
+
+          <svg
+            id="status-legend-chevron"
+            class="h-3.5 w-3.5 flex-none transition-transform duration-200"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </button>
+
+        <div id="status-legend-content" class="hidden mt-3 space-y-3">
+          {% for key in ["complete", "weak", "missing", "unclear"] %} {% set s
+          = status_styles[key] %}
+
+          <div class="flex items-start gap-2">
+            <span
+              class="mt-1 h-1.5 w-1.5 flex-none rounded-full"
+              style="background: {{ s.dot }};"
+            ></span>
+
+            <p class="text-xs leading-5 text-[#667085]">
+              <span class="font-semibold" style="color: {{ s.text }};">
+                {{ s.label }}
+              </span>
+              — {{ status_legend_desc[key] }}
+            </p>
+          </div>
+
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[#E4E7EC] bg-white p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-[15px] leading-[22px] font-semibold text-[#101828]">
+            Needs attention
+          </h2>
+
+          <span
+            id="needs-attention-count"
+            class="rounded-full bg-[#F2F4F7] px-2 py-0.5 text-xs font-medium text-[#667085]"
+          >
+            {{ total_sections - counts.complete }}
+          </span>
+        </div>
+
+        <div id="needs-attention-list" class="mt-4 space-y-1">
           {% for section in sections %} {% if section.status != "complete" %} {%
           set style = status_styles[section.status] %}
 
-          <div class="rounded-xl">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h4 class="text-sm font-semibold">{{ section.title }}</h4>
-
-                <p class="mt-1 text-xs leading-5 text-[#667085]">
-                  {{ helper_text[section.key][section.status] }}
-                </p>
-              </div>
-
+          <div
+            id="needs-row-{{ section.key }}"
+            class="flex items-center justify-between rounded-[10px] px-1 py-2.5"
+          >
+            <div class="flex items-center gap-2.5">
               <span
-                class="rounded-full px-2.5 py-1 text-[11px] font-semibold border"
-                style="
+                class="h-2 w-2 flex-none rounded-full"
+                style="background: {{ style.dot }};"
+              ></span>
+
+              <span class="text-sm font-medium text-[#344054]">
+                {{ section.title }}
+              </span>
+            </div>
+
+            <span
+              class="rounded-full border px-2 py-0.5 text-[11px] font-medium"
+              style="
                     background: {{ style.bg }};
                     border-color: {{ style.border }};
                     color: {{ style.text }};
                 "
-              >
-                {{ style.label }}
-              </span>
-            </div>
+            >
+              {{ style.label }}
+            </span>
           </div>
 
-          {% endif %} {% endfor %} {% if counts.complete == total_sections %}
+          {% endif %} {% endfor %}
+        </div>
 
-          <div class="rounded-xl border border-[#BBF7D0] bg-[#ECFDF3] p-5">
-            <div class="flex items-center gap-3">
-              <svg
-                class="h-5 w-5 text-[#16A34A]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M20 6L9 17L4 12"></path>
-              </svg>
+        <div
+          id="all-complete-banner"
+          class="mt-4 rounded-xl border border-[#BBF7D0] bg-[#ECFDF3] p-5 {{ '' if counts.complete == total_sections else 'hidden' }}"
+        >
+          <div class="flex items-center gap-3">
+            <svg
+              class="h-5 w-5 text-[#16A34A]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M20 6L9 17L4 12"></path>
+            </svg>
 
-              <div>
-                <h4 class="font-semibold text-[#166534]">
-                  Your case study is ready.
-                </h4>
+            <div>
+              <h4 class="font-semibold text-[#166534]">
+                Your case study is ready.
+              </h4>
 
-                <p class="mt-1 text-sm text-[#15803D]">
-                  All sections are complete.
-                </p>
-              </div>
+              <p class="mt-1 text-sm text-[#15803D]">
+                All sections are complete.
+              </p>
             </div>
           </div>
-
-          {% endif %}
         </div>
       </div>
     </div>
@@ -261,26 +411,44 @@ limitation, reflection, or next step from the project." } %}
       bg: "#ECFDF3",
       border: "#BBF7D0",
       color: "#15803D",
+      dot: "#22C55E",
     },
     weak: {
       label: "Weak",
       bg: "#FFF7ED",
       border: "#FED7AA",
       color: "#C2410C",
+      dot: "#F59E0B",
     },
     unclear: {
       label: "Unclear",
       bg: "#F5F3FF",
       border: "#DDD6FE",
       color: "#6D28D9",
+      dot: "#8B5CF6",
     },
     missing: {
       label: "Missing",
       bg: "#FEF2F2",
       border: "#FECACA",
       color: "#B91C1C",
+      dot: "#EF4444",
     },
   };
+
+  // Section metadata used to rebuild the "Needs attention" list client-side.
+  const SECTIONS = [
+    {% for section in sections %}
+    { key: "{{ section.key }}", title: "{{ section.title|e }}" }{{ "," if not loop.last }}
+    {% endfor %}
+  ];
+
+  // Per-field, per-status helper/error copy, used to show/hide and refresh
+  // the warning row under each textarea after an autosave.
+  const HELPER_TEXT = {{ helper_text | tojson }};
+
+  // Per-field "Why does this matter?" copy shown in the mini dropdown.
+  const WHY_TEXT = {{ why_text | tojson }};
 
   // state: "pill" | "circle" | "hidden"
   // icon:  "spinner" | "success" | "error" | null
@@ -354,6 +522,45 @@ limitation, reflection, or next step from the project." } %}
     });
   });
 
+  function toggleFieldWhy(key) {
+    const box = document.getElementById(`field-why-box-${key}`);
+    const toggle = document.getElementById(`field-why-toggle-${key}`);
+
+    if (!box || !toggle) return;
+
+    const isOpen = !box.classList.contains("hidden");
+
+    box.classList.toggle("hidden", isOpen);
+    toggle.textContent = isOpen ? "Why?" : "Close";
+  }
+
+  function closeFieldWhy(key) {
+    const box = document.getElementById(`field-why-box-${key}`);
+    const toggle = document.getElementById(`field-why-toggle-${key}`);
+
+    if (box) box.classList.add("hidden");
+    if (toggle) toggle.textContent = "Why?";
+  }
+
+  document.querySelectorAll(".field-why-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      toggleFieldWhy(toggle.dataset.key);
+    });
+  });
+
+  const legendToggle = document.getElementById("status-legend-toggle");
+  const legendContent = document.getElementById("status-legend-content");
+  const legendChevron = document.getElementById("status-legend-chevron");
+
+  if (legendToggle) {
+    legendToggle.addEventListener("click", () => {
+      const isOpen = !legendContent.classList.contains("hidden");
+
+      legendContent.classList.toggle("hidden", isOpen);
+      legendChevron.classList.toggle("rotate-180", !isOpen);
+    });
+  }
+
   function updateFieldStatus(field, status) {
     const badge = document.getElementById(`status-${field}`);
 
@@ -380,6 +587,31 @@ limitation, reflection, or next step from the project." } %}
       badge.style.transform = "scale(1)";
       badge.style.opacity = "1";
     }, 150);
+
+    updateFieldHelper(field, status);
+  }
+
+  // Shows/hides the warning row under a field's textarea, and refreshes its
+  // copy to match the field's current status. Hidden entirely once complete.
+  function updateFieldHelper(field, status) {
+    const helper = document.getElementById(`field-helper-${field}`);
+
+    if (!helper) return;
+
+    closeFieldWhy(field);
+
+    if (status === "complete") {
+      helper.style.display = "none";
+      return;
+    }
+
+    const textEl = document.getElementById(`field-helper-text-${field}`);
+
+    if (textEl && HELPER_TEXT[field] && HELPER_TEXT[field][status]) {
+      textEl.textContent = HELPER_TEXT[field][status];
+    }
+
+    helper.style.display = "flex";
   }
 
   async function autoSave(textarea) {
@@ -478,6 +710,79 @@ limitation, reflection, or next step from the project." } %}
     }
   }
 
+  // Recomputes every derived, sidebar bit of UI (progress count, the
+  // Status summary pills, and the Needs attention list/badge/banner)
+  // from the current .field-status badges in the DOM.
+  function recalcSidebar() {
+    const badges = document.querySelectorAll(".field-status");
+
+    const counts = { complete: 0, weak: 0, missing: 0, unclear: 0 };
+    const statusByKey = {};
+
+    badges.forEach((badge) => {
+      const status = badge.dataset.status;
+      const key = badge.id.replace("status-", "");
+
+      statusByKey[key] = status;
+
+      if (counts[status] !== undefined) counts[status] += 1;
+    });
+
+    const total = badges.length;
+    const needsAttention = total - counts.complete;
+
+    const progressCount = document.getElementById("case-progress-count");
+    if (progressCount) progressCount.textContent = `${counts.complete} / ${total}`;
+
+    const summaryComplete = document.getElementById("summary-count-complete");
+    const summaryWeak = document.getElementById("summary-count-weak");
+    const summaryMissing = document.getElementById("summary-count-missing");
+    const summaryUnclear = document.getElementById("summary-count-unclear");
+
+    if (summaryComplete) summaryComplete.textContent = counts.complete;
+    if (summaryWeak) summaryWeak.textContent = counts.weak;
+    if (summaryMissing) summaryMissing.textContent = counts.missing;
+    if (summaryUnclear) summaryUnclear.textContent = counts.unclear;
+
+    const needsCountBadge = document.getElementById("needs-attention-count");
+    if (needsCountBadge) needsCountBadge.textContent = needsAttention;
+
+    const list = document.getElementById("needs-attention-list");
+
+    if (list) {
+      list.innerHTML = "";
+
+      SECTIONS.forEach((section) => {
+        const status = statusByKey[section.key];
+
+        if (!status || status === "complete") return;
+
+        const style = STATUS_STYLE[status];
+
+        if (!style) return;
+
+        const row = document.createElement("div");
+        row.id = `needs-row-${section.key}`;
+        row.className =
+          "flex items-center justify-between rounded-[10px] px-1 py-2.5";
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="h-2 w-2 flex-none rounded-full" style="background: ${style.dot};"></span>
+            <span class="text-sm font-medium text-[#344054]">${section.title}</span>
+          </div>
+          <span class="rounded-full border px-2 py-0.5 text-[11px] font-medium" style="background: ${style.bg}; border-color: ${style.border}; color: ${style.color};">
+            ${style.label}
+          </span>
+        `;
+
+        list.appendChild(row);
+      });
+    }
+
+    const banner = document.getElementById("all-complete-banner");
+    if (banner) banner.classList.toggle("hidden", needsAttention !== 0);
+  }
+
   function updateProgress() {
     const badges = document.querySelectorAll(".field-status");
 
@@ -508,6 +813,8 @@ limitation, reflection, or next step from the project." } %}
     }
 
     text.textContent = `${progress}% Complete`;
+
+    recalcSidebar();
   }
 </script>
 {% endblock %}

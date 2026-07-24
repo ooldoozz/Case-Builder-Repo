@@ -4,184 +4,200 @@
   id="toast-container"
   class="fixed top-6 right-6 z-[100] flex flex-col gap-3"
 ></div>
-<div class="max-w-5xl mx-auto py-6 px-4">
-  <div class="flex items-start justify-between mb-8">
-    <div>
-      <h1 class="text-3xl font-bold text-[#0F172A]">Saved Cases</h1>
+<div class="max-w-[1376px] mx-auto pt-10 px-8 pb-10">
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col gap-2 max-w-[760px]">
+      <h1 class="text-[32px] leading-[40px] font-semibold text-[#111827]">Saved cases</h1>
 
-      <p class="mt-2 text-[15px] text-[#667085]">
-        Open a saved case study, continue editing it, or copy the final output.
+      <p class="text-base leading-6 text-[#667085]">
+        Open a saved case study, continue editing it, or export when it's ready.
       </p>
     </div>
 
     <a
       href="/cases/new"
-      class="inline-flex items-center rounded-xl bg-[#18233F] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0F1830]"
+      class="inline-flex items-center justify-center gap-2 h-10 min-w-[92px] px-4 py-2 rounded-lg bg-[#18233F] text-sm font-medium text-white transition hover:bg-[#0F1830]"
     >
-      Create New Case
+      Create a case study
     </a>
   </div>
 
-  <div class="flex items-center gap-3 mb-8">
-    <input
-      type="text"
-      placeholder="Search saved cases"
-      class="flex-1 max-w-xs rounded-xl border border-[#E4E7EC] px-4 py-2.5 text-sm text-[#0F172A] placeholder-[#98A2B3] outline-none transition focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/15"
-    />
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2.5">
+      <div class="relative w-80 h-11">
+        <svg
+          class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#667085]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <input
+          type="text"
+          id="case-search-input"
+          placeholder="Search saved cases"
+          class="w-full h-11 rounded-[10px] border border-[#D9DEE8] bg-white pl-10 pr-4 text-sm text-[#0F172A] placeholder-[#98A2B3] outline-none transition focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/15"
+        />
+      </div>
 
-    <div class="flex items-center gap-2">
-      <button
-        class="rounded-xl bg-[#18233F] px-4 py-2.5 text-sm font-semibold text-white"
-      >
-        All
-      </button>
+      <div id="case-filter-buttons" class="flex items-center gap-2">
+        <button
+          type="button"
+          data-filter="all"
+          class="case-filter-btn is-active flex items-center justify-center h-8 px-3 rounded-lg bg-[#F1F4F9] text-xs font-medium text-[#18233F]"
+        >
+          All
+        </button>
 
-      <button
-        class="rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-medium text-[#344054]"
-      >
-        Draft
-      </button>
+        <button
+          type="button"
+          data-filter="draft"
+          class="case-filter-btn flex items-center justify-center h-8 px-3 rounded-lg border border-[#D9DEE8] bg-white text-xs font-medium text-[#344054]"
+        >
+          Draft
+        </button>
 
-      <button
-        class="rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-medium text-[#344054]"
-      >
-        Needs Review
-      </button>
+        <button
+          type="button"
+          data-filter="needs_review"
+          class="case-filter-btn flex items-center justify-center h-8 px-3 rounded-lg border border-[#D9DEE8] bg-white text-xs font-medium text-[#344054]"
+        >
+          Needs review
+        </button>
 
-      <button
-        class="rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-medium text-[#344054]"
-      >
-        Complete
-      </button>
+        <button
+          type="button"
+          data-filter="complete"
+          class="case-filter-btn flex items-center justify-center h-8 px-3 rounded-lg border border-[#D9DEE8] bg-white text-xs font-medium text-[#344054]"
+        >
+          Complete
+        </button>
+      </div>
     </div>
 
-    <div class="ml-auto text-sm text-[#667085]">{{ cases|length }} cases</div>
+    <div id="case-count" class="text-sm text-[#667085]">{{ cases|length }} cases</div>
   </div>
 
   {% if cases %}
 
-  <div class="space-y-4">
+  <div id="case-list" class="flex flex-col gap-4">
     {% for case in cases %}
 
-    <div class="rounded-2xl border border-[#E7EAF0] bg-white p-6">
-      <div class="flex items-start justify-between">
-        <div>
-          <h2 class="text-lg font-bold text-[#0F172A]">
-            {{ case.title or "Untitled Case" }}
-          </h2>
+    <div
+      class="case-card flex items-center justify-between rounded-2xl border border-[#D9DEE8] bg-white px-5 py-4"
+      data-status="{{ case.status }}"
+      data-title="{{ (case.title or 'Untitled Case')|lower }}"
+    >
+      <div class="flex flex-col gap-2 w-[920px]">
+        <h2 class="text-xl leading-7 font-semibold text-[#111827]">
+          {{ case.title or "Untitled Case" }}
+        </h2>
 
-          <p class="mt-1 text-sm text-[#667085]">
-            Updated {{ case.updated_at }}
-          </p>
+        <p class="text-xs leading-4 text-[#667085]">
+          Updated {{ case.updated_at }}
+        </p>
 
-          <p class="mt-1 text-sm text-[#667085]">
-            {{ case.filled_sections.complete }} of 9 sections complete
-          </p>
-        </div>
+        <p class="text-sm leading-5 text-[#667085]">
+          {{ case.filled_sections.complete }} of 9 sections complete
+        </p>
 
-        <div class="flex items-center gap-3">
+        <div class="w-[720px] h-2 rounded-full bg-[#F1F4F9] overflow-hidden">
           {% if case.status == "draft" %}
 
-          <span
-            class="inline-flex items-center gap-1.5 rounded-full border border-[#E4E7EC] bg-[#F3F4F6] px-3 py-1 text-xs font-semibold text-[#667085]"
-          >
-            Draft
-          </span>
+          <div
+            class="h-full rounded-full bg-[#4F6BFF]"
+            style="width: {{ case.progress }}%;"
+          ></div>
 
           {% elif case.status == "needs_review" %}
-          <span
-            class="inline-flex items-center gap-1.5 rounded-full border border-[#FEE685] bg-[#FFFBEB] px-3 py-1 text-xs font-semibold text-[#BB4D00]"
-          >
-            Needs Review
-          </span>
-          {% elif case.status == "complete" %}
-
-          <span
-            class="inline-flex items-center gap-1.5 rounded-full border border-[#A4F4CF] bg-[#ECFDF5] px-3 py-1 text-xs font-semibold text-[#007A55]"
-          >
-            Complete
-          </span>
-
-          {% endif %} {% if case.status == "complete" %}
-
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-medium text-[#344054] hover:border-[#D0D5DD]"
-          >
-            <svg
-              class="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-              <path
-                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-              ></path>
-            </svg>
-
-            Copy Output
-          </button>
-
-          {% endif %}
-
-          <a
-            href="/cases/{{ case.id }}/edit"
-            class="rounded-xl bg-[#18233F] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0F1830]"
-          >
-            Open Case
-          </a>
-        </div>
-      </div>
-
-      <div class="mt-5 flex items-center gap-3">
-        <div class="flex-1 h-2 rounded-full bg-[#F1F4F9] overflow-hidden">
-          {% if case.status == "draft" %}
 
           <div
-            class="h-full rounded-full bg-[#98A2B3]"
-            style="width: {{ case.progress }}%;"
-          ></div>
-
-          {% elif case.status == "needs_review" %} {% if case.progress < 33 %}
-
-          <div
-            class="h-full rounded-full bg-[#EF4444]"
-            style="width: {{ case.progress }}%;"
-          ></div>
-
-          {% elif case.progress < 66 %}
-
-          <div
-            class="h-full rounded-full bg-[#FFB900]"
+            class="h-full rounded-full bg-[#F79009]"
             style="width: {{ case.progress }}%;"
           ></div>
 
           {% else %}
 
           <div
-            class="h-full rounded-full bg-[#3B82F6]"
-            style="width: {{ case.progress }}%;"
-          ></div>
-
-          {% endif %} {% else %}
-
-          <div
-            class="h-full rounded-full bg-[#00BC7D]"
+            class="h-full rounded-full bg-[#12B76A]"
             style="width: {{ case.progress }}%;"
           ></div>
 
           {% endif %}
         </div>
+      </div>
 
-        <span class="w-10 text-right text-sm text-[#667085]">
-          {{ case.progress }}%
+      <div class="flex flex-col items-end gap-4">
+        {% if case.status == "draft" %}
+
+        <span
+          class="inline-flex items-center h-4 px-3 rounded-full border border-[#D9DEE8] bg-[#F1F4F9] text-xs font-normal text-[#667085]"
+        >
+          Draft
         </span>
+
+        {% elif case.status == "needs_review" %}
+        <span
+          class="inline-flex items-center h-4 px-3 rounded-full border border-[#FDE68A] bg-[#FFFAEB] text-xs font-normal text-[#B54708]"
+        >
+          Needs Review
+        </span>
+        {% elif case.status == "complete" %}
+
+        <span
+          class="inline-flex items-center h-4 px-3 rounded-full border border-[#A7F3D0] bg-[#ECFDF3] text-xs font-normal text-[#047857]"
+        >
+          Complete
+        </span>
+
+        {% endif %}
+
+        <div class="flex items-center gap-2">
+          <a
+            href="/cases/{{ case.id }}/edit"
+            class="inline-flex items-center justify-center w-20 h-10 rounded-lg border border-[#D9DEE8] bg-white text-xs font-medium text-[#344054] hover:border-[#B7BFCC]"
+          >
+            Open
+          </a>
+
+          {% if case.status == "complete" %}
+
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-2 w-[104px] h-10 rounded-lg bg-[#18233F] text-xs font-medium text-white hover:bg-[#0F1830]"
+          >
+            <svg
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M12 3v12"></path>
+              <path d="m7 10 5 5 5-5"></path>
+              <path d="M5 21h14"></path>
+            </svg>
+
+            Export
+          </button>
+
+          {% endif %}
+        </div>
       </div>
     </div>
 
     {% endfor %}
+  </div>
+
+  <div
+    id="case-no-results"
+    class="hidden rounded-2xl border border-dashed border-[#D9DEE8] bg-white py-16 px-10 text-center"
+  >
+    <p class="text-base font-semibold text-[#111827]">No cases match your search</p>
+    <p class="mt-1 text-sm text-[#667085]">Try a different keyword or filter.</p>
   </div>
 
   {% else %}
@@ -204,7 +220,7 @@
 
     <a
       href="/cases/new"
-      class="mt-8 inline-flex rounded-xl bg-[#4F6BFF] px-6 py-3 font-semibold text-white transition hover:bg-[#3D5CF5]"
+      class="mt-8 inline-flex items-center justify-center h-10 min-w-[92px] px-4 py-2 rounded-lg bg-[#18233F] font-medium text-sm text-white transition hover:bg-[#0F1830]"
     >
       Create Your First Case
     </a>
@@ -221,6 +237,67 @@
     sessionStorage.removeItem("toast");
 
     showToast(JSON.parse(raw));
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("case-search-input");
+    const filterButtons = document.querySelectorAll(".case-filter-btn");
+    const cards = document.querySelectorAll(".case-card");
+    const noResults = document.getElementById("case-no-results");
+    const countLabel = document.getElementById("case-count");
+
+    if (!cards.length) return;
+
+    let activeFilter = "all";
+
+    const activeClasses = ["bg-[#F1F4F9]", "text-[#18233F]"];
+    const inactiveClasses = ["border", "border-[#D9DEE8]", "bg-white", "text-[#344054]"];
+
+    function setActiveButton(button) {
+      filterButtons.forEach((btn) => {
+        btn.classList.remove(...activeClasses);
+        btn.classList.add(...inactiveClasses);
+        btn.classList.remove("is-active");
+      });
+
+      button.classList.remove(...inactiveClasses);
+      button.classList.add(...activeClasses);
+      button.classList.add("is-active");
+    }
+
+    function applyFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const matchesStatus = activeFilter === "all" || card.dataset.status === activeFilter;
+        const matchesQuery = !query || card.dataset.title.includes(query);
+        const isVisible = matchesStatus && matchesQuery;
+
+        card.classList.toggle("hidden", !isVisible);
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (noResults) {
+        noResults.classList.toggle("hidden", visibleCount !== 0);
+      }
+
+      if (countLabel) {
+        countLabel.textContent = `${visibleCount} case${visibleCount === 1 ? "" : "s"}`;
+      }
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter;
+        setActiveButton(button);
+        applyFilters();
+      });
+    });
   });
 </script>
 {% endblock %}
