@@ -10,13 +10,29 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from models.case import CaseExportPreview
 from sqlalchemy.orm import Session
 
 from database import get_db
 from schemas import CreateCaseRequest
 from services.ai.case_builder import generate_case
 from services.storage.case_storage import save_case
-from repositories import get_cases, get_case_by_id
+from services.export import (
+    SECTION_DEFINITIONS,
+    TOTAL_FIELDS,
+    build_default_preview,
+    build_sections,
+    image_to_dict,
+    normalize_preview,
+    width_span,
+)
+from repositories import (
+    create_case_export_preview,
+    get_case_by_id,
+    get_case_export_preview,
+    get_case_images,
+    get_cases,
+)
 
 templates = Jinja2Templates(directory="templates")
 
@@ -74,20 +90,6 @@ def generate_case_page(
     )
 
 
-SECTION_DEFINITIONS = [
-    ("01", "Project Overview", "project_overview"),
-    ("02", "Problem", "problem"),
-    ("03", "My Role", "my_role"),
-    ("04", "Users / Context", "users_context"),
-    ("05", "Research / Discovery", "research"),
-    ("06", "Key UX Decisions", "key_ux_decisions"),
-    ("07", "Solution", "solution"),
-    ("08", "Impact", "impact"),
-    ("09", "What I Learned", "what_i_learned"),
-]
-
-TOTAL_FIELDS = len(SECTION_DEFINITIONS)
-
 STATUS_ORDER = [
     "complete",
     "weak",
@@ -117,27 +119,7 @@ def edit_case(
 
     counts, progress = calculate_progress(result)
 
-    sections = []
-
-    for number, title, key in SECTION_DEFINITIONS:
-
-        field = result.get(key, {})
-
-        if not isinstance(field, dict):
-            field = {
-                "content": field,
-                "status": "missing",
-            }
-
-        sections.append(
-            {
-                "number": number,
-                "title": title,
-                "key": key,
-                "status": field.get("status", "missing"),
-                "body": field.get("content") or "",
-            }
-        )
+    sections = build_sections(result)
 
     review_sections = [
         section
@@ -242,7 +224,7 @@ def archive(
 
         result = json.loads(case.generated_json)
 
-        filled, progress = calculate_progress(result)
+        counts, progress = calculate_progress(result)
 
         archive_cases.append(
             {
@@ -254,7 +236,7 @@ def archive(
                 "updated_at": humanize_datetime(case.updated_at),
                 "created_at": case.created_at,
                 "progress": progress,
-                "filled_sections": filled,
+                "filled_sections": counts["complete"],
             }
         )
 
@@ -277,48 +259,46 @@ def export_case(
     case_id: int,
     db: Session = Depends(get_db),
 ):
-    case = get_case_by_id(
-        db=db,
-        case_id=case_id,
-    )
-
+    case = get_case_by_id(db=db, case_id=case_id)
     if case is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Case not found.",
-        )
+        raise HTTPException(status_code=404, detail="Case not found.")
 
     result = json.loads(case.generated_json)
-
     counts, progress = calculate_progress(result)
+    sections = build_sections(result)
+    images = get_case_images(db=db, case_id=case_id)
 
-    sections = []
+    default_preview = build_default_preview(case, sections, images)
+    preview_record = get_case_export_preview(db=db, case_id=case_id)
 
-    for number, title, key in SECTION_DEFINITIONS:
-
-        field = result.get(key, {})
-
-        if not isinstance(field, dict):
-            field = {
-                "content": field,
-                "status": "missing",
-            }
-
-        sections.append(
-            {
-                "number": number,
-                "title": title,
-                "key": key,
-                "status": field.get("status", "missing"),
-                "body": field.get("content") or "",
-            }
+    if preview_record is None:
+        preview = normalize_preview(default_preview, default_preview, images)
+        preview_record = create_case_export_preview(
+            db=db,
+            preview=CaseExportPreview(
+                case_id=case.id,
+                preview_json=json.dumps(preview, ensure_ascii=False),
+            ),
         )
+    else:
+        try:
+            stored_preview = json.loads(preview_record.preview_json)
+        except (TypeError, json.JSONDecodeError):
+            stored_preview = {}
+        preview = normalize_preview(stored_preview, default_preview, images)
 
-    issues_count = (
-        counts.get("weak", 0)
-        + counts.get("unclear", 0)
-        + counts.get("missing", 0)
-    )
+    all_images = [image_to_dict(image) for image in images]
+    images_by_id = {image["id"]: image for image in all_images}
+    images_by_section = {}
+    for _, _, key in SECTION_DEFINITIONS:
+        images_by_section[key] = [
+            images_by_id[image_id]
+            for image_id in preview["sections"][key]["image_order"]
+            if image_id in images_by_id
+            and images_by_id[image_id]["section_key"] == key
+        ]
+
+    issues_count = counts["weak"] + counts["unclear"] + counts["missing"]
 
     return templates.TemplateResponse(
         request=request,
@@ -333,5 +313,11 @@ def export_case(
             "filled_sections": counts["complete"],
             "total_sections": TOTAL_FIELDS,
             "custom_navbar": "partials/export_navbar.html",
+            "preview": preview,
+            "default_preview": default_preview,
+            "preview_version": preview_record.version,
+            "images_by_section": images_by_section,
+            "all_images": all_images,
+            "width_span": width_span,
         },
     )

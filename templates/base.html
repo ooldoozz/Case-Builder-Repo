@@ -2,102 +2,55 @@
 <html lang="en">
   <head>
     {% include "partials/head.html" %}
+    {% block head_extra %}{% endblock %}
   </head>
 
-  <div
-    id="toast-container"
-    class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"
-  ></div>
   <body class="bg-gray-100">
-    {% set hide_nav_links = hide_nav_links | default(false) %} {% if
-    custom_navbar %} {% include custom_navbar %} {% else %} {% include
-    "partials/navbar.html" %} {% endif %}
+    <div
+      id="toast-container"
+      class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"
+    ></div>
+
+    {% set hide_nav_links = hide_nav_links | default(false) %}
+    {% if custom_navbar %}
+      {% include custom_navbar %}
+    {% else %}
+      {% include "partials/navbar.html" %}
+    {% endif %}
 
     <main class="overflow-x-hidden">
-      {% block content %} {% endblock %}
+      {% block content %}{% endblock %}
     </main>
 
     {% include "partials/scripts.html" %}
-  </body>
-  <script>
-    function showToast({
-      type = "success",
-      title,
-      description = "",
-      duration = 4000,
-    }) {
-      const colors = {
-        success: "text-[#047857]",
-        info: "text-[#4F6BFF]",
-        error: "text-[#D92D20]",
-      };
 
-      const icons = {
-        success: `
-        <svg class="h-5 w-5 text-[#667085]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
-          <path d="M5 10L8.5 13.5L15 7"/>
-        </svg>
-      `,
-        info: `
-        <svg class="h-5 w-5 text-[#667085]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
-          <rect x="7" y="7" width="10" height="10" rx="1"/>
-          <rect x="3" y="3" width="10" height="10" rx="1"/>
-        </svg>
-      `,
-        error: `
-        <svg class="h-5 w-5 text-[#667085]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
-          <circle cx="10" cy="10" r="8"/>
-          <path d="M10 6v5"/>
-          <circle cx="10" cy="14" r=".5" fill="currentColor"/>
-        </svg>
-      `,
-      };
-
-      const toast = document.createElement("div");
-
-      toast.className =
-        "pointer-events-auto flex items-center gap-3 rounded-xl border border-[#D9DEE8] bg-white px-4 py-3 shadow-lg transition-all duration-300 opacity-0 translate-x-8";
-
-      toast.innerHTML = `
-      ${icons[type]}
-
-      <div class="flex-1">
-          <div class="text-sm font-semibold ${colors[type]}">
-              ${title}
-          </div>
-
-          ${
-            description
-              ? `<div class="mt-1 text-xs text-[#667085]">${description}</div>`
-              : ""
-          }
-      </div>
-
-      <button class="toast-close text-[#667085] hover:text-black">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
-              <path d="M6 6L14 14"/>
-              <path d="M14 6L6 14"/>
-          </svg>
-      </button>
-    `;
-
-      const container = document.getElementById("toast-container");
-
-      container.appendChild(toast);
-
-      requestAnimationFrame(() => {
-        toast.classList.remove("opacity-0", "translate-x-8");
-      });
-
-      function closeToast() {
-        toast.classList.add("opacity-0", "translate-x-8");
-
-        setTimeout(() => toast.remove(), 300);
+    <script>
+      function showToast({ type = "success", title, description = "", duration = 4000 }) {
+        const colors = {
+          success: "text-[#047857]",
+          info: "text-[#4F6BFF]",
+          error: "text-[#D92D20]",
+        };
+        const icons = {
+          success: `<svg class="h-5 w-5 text-[#667085]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20"><path d="M5 10L8.5 13.5L15 7"/></svg>`,
+          info: `<svg class="h-5 w-5 text-[#667085]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20"><rect x="7" y="7" width="10" height="10" rx="1"/><rect x="3" y="3" width="10" height="10" rx="1"/></svg>`,
+          error: `<svg class="h-5 w-5 text-[#667085]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 6v5"/><circle cx="10" cy="14" r=".5" fill="currentColor"/></svg>`,
+        };
+        const toast = document.createElement("div");
+        toast.className = "pointer-events-auto flex items-center gap-3 rounded-xl border border-[#D9DEE8] bg-white px-4 py-3 shadow-lg transition-all duration-300 opacity-0 translate-x-8";
+        toast.innerHTML = `${icons[type]}<div class="flex-1"><div class="text-sm font-semibold ${colors[type]}">${title}</div>${description ? `<div class="mt-1 text-xs text-[#667085]">${description}</div>` : ""}</div><button class="toast-close text-[#667085] hover:text-black" aria-label="Close"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20"><path d="M6 6L14 14"/><path d="M14 6L6 14"/></svg></button>`;
+        const container = document.getElementById("toast-container");
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.remove("opacity-0", "translate-x-8"));
+        function closeToast() {
+          toast.classList.add("opacity-0", "translate-x-8");
+          setTimeout(() => toast.remove(), 300);
+        }
+        toast.querySelector(".toast-close").onclick = closeToast;
+        setTimeout(closeToast, duration);
       }
+    </script>
 
-      toast.querySelector(".toast-close").onclick = closeToast;
-
-      setTimeout(closeToast, duration);
-    }
-  </script>
+    {% block page_scripts %}{% endblock %}
+  </body>
 </html>

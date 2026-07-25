@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CreateCaseRequest(BaseModel):
@@ -82,3 +82,14 @@ class CaseImageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CaseExportPreviewUpdateRequest(BaseModel):
+    preview: dict[str, Any] = Field(default_factory=dict)
+    version: int | None = None
+
+
+class CaseExportPreviewResponse(BaseModel):
+    case_id: int
+    version: int
+    preview: dict[str, Any]

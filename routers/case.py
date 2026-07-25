@@ -1,12 +1,13 @@
 import json
 import os
 import uuid
+from io import BytesIO
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
-from models.case import CaseImage
+from fastapi.responses import FileResponse, StreamingResponse
+from models.case import CaseExportPreview, CaseImage
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -21,6 +22,9 @@ from repositories import (
     create_case_image as repo_create_case_image,
     update_case_image as repo_update_case_image,
     delete_case_image as repo_delete_case_image,
+    get_case_export_preview as repo_get_case_export_preview,
+    create_case_export_preview as repo_create_case_export_preview,
+    update_case_export_preview as repo_update_case_export_preview,
 )
     
 from schemas import (
@@ -30,10 +34,21 @@ from schemas import (
     CaseImageResponse,
     CaseImageUpdateRequest,
     CaseImageBulkUpdateRequest,
+    CaseExportPreviewResponse,
+    CaseExportPreviewUpdateRequest,
 )
 from services.ai.case_builder import generate_case
 from services.ai.case_editor import evaluate_field_status, CaseEditorError
 from services.case_status import calculate_case_status
+from services.export import (
+    build_case_docx,
+    build_case_pdf,
+    build_default_preview,
+    build_sections,
+    image_to_dict,
+    normalize_preview,
+)
+from services.export.common import safe_filename
 from services.storage.case_storage import save_case
 
 case_router = APIRouter(
@@ -147,6 +162,35 @@ def _stored_filename_from_location(location: str | None) -> str | None:
         return None
 
     return Path(urlparse(location).path).name or None
+
+
+def _load_export_preview(
+    db: Session,
+    case,
+    result: dict,
+    images: list[CaseImage],
+):
+    sections = build_sections(result)
+    default_preview = build_default_preview(case, sections, images)
+    preview_record = repo_get_case_export_preview(db=db, case_id=case.id)
+
+    if preview_record is None:
+        preview = normalize_preview(default_preview, default_preview, images)
+        preview_record = repo_create_case_export_preview(
+            db=db,
+            preview=CaseExportPreview(
+                case_id=case.id,
+                preview_json=json.dumps(preview, ensure_ascii=False),
+            ),
+        )
+    else:
+        try:
+            stored_preview = json.loads(preview_record.preview_json)
+        except (TypeError, json.JSONDecodeError):
+            stored_preview = {}
+        preview = normalize_preview(stored_preview, default_preview, images)
+
+    return preview_record, preview, sections
 
 @case_router.post("")
 def create_case(
@@ -342,6 +386,153 @@ def update_case_status(
         "description": f'"{case.title}" is now marked as {case.status.replace("_", " ").title()}.'
     }
 }
+
+@case_router.get(
+    "/{case_id}/export-preview",
+    response_model=CaseExportPreviewResponse,
+)
+def get_export_preview(
+    case_id: int,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(db=db, case_id=case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    result = json.loads(case.generated_json)
+    images = repo_get_case_images(db=db, case_id=case_id)
+    preview_record, preview, _ = _load_export_preview(db, case, result, images)
+
+    return {
+        "case_id": case.id,
+        "version": preview_record.version,
+        "preview": preview,
+    }
+
+
+@case_router.patch(
+    "/{case_id}/export-preview",
+    response_model=CaseExportPreviewResponse,
+)
+def update_export_preview(
+    case_id: int,
+    request: CaseExportPreviewUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(db=db, case_id=case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    result = json.loads(case.generated_json)
+    images = repo_get_case_images(db=db, case_id=case_id)
+    preview_record, _, sections = _load_export_preview(db, case, result, images)
+
+    if request.version is not None and request.version != preview_record.version:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "The Preview changed in another request.",
+                "current_version": preview_record.version,
+            },
+        )
+
+    default_preview = build_default_preview(case, sections, images)
+    preview = normalize_preview(request.preview, default_preview, images)
+    preview_record = repo_update_case_export_preview(
+        db=db,
+        preview=preview_record,
+        preview_json=preview,
+    )
+
+    return {
+        "case_id": case.id,
+        "version": preview_record.version,
+        "preview": preview,
+    }
+
+
+@case_router.post("/{case_id}/export/pdf")
+def export_case_pdf(
+    case_id: int,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(db=db, case_id=case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    result = json.loads(case.generated_json)
+    images = repo_get_case_images(db=db, case_id=case_id)
+    _, preview, sections = _load_export_preview(db, case, result, images)
+    image_dicts = [image_to_dict(image) for image in images]
+
+    try:
+        output = build_case_pdf(
+            case=case,
+            sections=sections,
+            all_images=image_dicts,
+            preview=preview,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF export failed: {exc}",
+        ) from exc
+
+    filename = safe_filename(case.title) + ".pdf"
+    return StreamingResponse(
+        BytesIO(output),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                "attachment; filename*=UTF-8''" + quote(filename)
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@case_router.post("/{case_id}/export/docx")
+def export_case_docx(
+    case_id: int,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(db=db, case_id=case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    result = json.loads(case.generated_json)
+    images = repo_get_case_images(db=db, case_id=case_id)
+    _, preview, sections = _load_export_preview(db, case, result, images)
+    image_dicts = [image_to_dict(image) for image in images]
+
+    try:
+        output = build_case_docx(
+            case=case,
+            sections=sections,
+            all_images=image_dicts,
+            preview=preview,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Word export failed: {exc}",
+        ) from exc
+
+    filename = safe_filename(case.title) + ".docx"
+    return StreamingResponse(
+        BytesIO(output),
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document"
+        ),
+        headers={
+            "Content-Disposition": (
+                "attachment; filename*=UTF-8''" + quote(filename)
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
 
 @case_router.get(
     "/{case_id}/images",
@@ -678,4 +869,3 @@ def delete_case_image(
     return {
         "success": True,
     }
-
