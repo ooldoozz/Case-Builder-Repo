@@ -1,16 +1,35 @@
 import json
+import os
+import uuid
+from pathlib import Path
+from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from models.case import CaseImage
 from sqlalchemy.orm import Session
 
 from database import get_db
-from repositories import get_cases, get_case_by_id, update_case_content, update_case
+from repositories import (
+    get_cases,
+    get_case_by_id,
+    update_case_content,
+    update_case,
+
+    get_case_images as repo_get_case_images,
+    get_case_image as repo_get_case_image,
+    create_case_image as repo_create_case_image,
+    update_case_image as repo_update_case_image,
+    delete_case_image as repo_delete_case_image,
+)
+    
 from schemas import (
     CreateCaseRequest,
     CaseListItem,
     CaseDetailResponse,
-    UpdateCaseRequest,
-    UpdateCaseRequest,
+    CaseImageResponse,
+    CaseImageUpdateRequest,
+    CaseImageBulkUpdateRequest,
 )
 from services.ai.case_builder import generate_case
 from services.ai.case_editor import evaluate_field_status, CaseEditorError
@@ -21,6 +40,113 @@ case_router = APIRouter(
     prefix="/cases",
     tags=["Cases"],
 )
+
+CASE_IMAGE_UPLOAD_DIR = Path(
+    os.getenv("CASE_IMAGE_UPLOAD_DIR", "uploads/case_images")
+).resolve()
+
+IMAGE_LIMITS = {
+    ".png": 8 * 1024 * 1024,
+    ".jpg": 8 * 1024 * 1024,
+    ".jpeg": 8 * 1024 * 1024,
+    ".webp": 8 * 1024 * 1024,
+    ".svg": 2 * 1024 * 1024,
+}
+
+IMAGE_MEDIA_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+}
+
+
+def _case_image_directory(case_id: int) -> Path:
+    directory = (CASE_IMAGE_UPLOAD_DIR / str(case_id)).resolve()
+
+    if CASE_IMAGE_UPLOAD_DIR != directory and CASE_IMAGE_UPLOAD_DIR not in directory.parents:
+        raise HTTPException(status_code=400, detail="Invalid image path.")
+
+    return directory
+
+
+def _case_image_path(case_id: int, stored_name: str) -> Path:
+    if Path(stored_name).name != stored_name:
+        raise HTTPException(status_code=400, detail="Invalid image filename.")
+
+    directory = _case_image_directory(case_id)
+    image_path = (directory / stored_name).resolve()
+
+    if directory not in image_path.parents:
+        raise HTTPException(status_code=400, detail="Invalid image path.")
+
+    return image_path
+
+
+def _validate_image_bytes(filename: str, content: bytes) -> str:
+    extension = Path(filename or "").suffix.lower()
+
+    if extension not in IMAGE_LIMITS:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported image format. Use PNG, JPG, WEBP, or SVG.",
+        )
+
+    if not content:
+        raise HTTPException(status_code=400, detail="The uploaded image is empty.")
+
+    if len(content) > IMAGE_LIMITS[extension]:
+        max_mb = IMAGE_LIMITS[extension] // (1024 * 1024)
+        raise HTTPException(
+            status_code=413,
+            detail=f"The image is larger than the {max_mb} MB limit.",
+        )
+
+    valid_signature = False
+
+    if extension == ".png":
+        valid_signature = content.startswith(b"\x89PNG\r\n\x1a\n")
+    elif extension in {".jpg", ".jpeg"}:
+        valid_signature = content.startswith(b"\xff\xd8\xff")
+    elif extension == ".webp":
+        valid_signature = (
+            len(content) >= 12
+            and content.startswith(b"RIFF")
+            and content[8:12] == b"WEBP"
+        )
+    elif extension == ".svg":
+        svg_text = content.decode("utf-8", errors="ignore").lower()
+        compact_svg = svg_text.lstrip("\ufeff \t\r\n")
+        valid_signature = "<svg" in compact_svg[:1000]
+
+        unsafe_tokens = (
+            "<script",
+            "javascript:",
+            "onload=",
+            "onerror=",
+            "<foreignobject",
+        )
+        if any(token in svg_text for token in unsafe_tokens):
+            raise HTTPException(
+                status_code=400,
+                detail="This SVG contains unsupported active content.",
+            )
+
+    if not valid_signature:
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded file does not appear to be a valid image.",
+        )
+
+    return extension
+
+
+def _stored_filename_from_location(location: str | None) -> str | None:
+    if not location:
+        return None
+
+    return Path(urlparse(location).path).name or None
 
 @case_router.post("")
 def create_case(
@@ -216,3 +342,340 @@ def update_case_status(
         "description": f'"{case.title}" is now marked as {case.status.replace("_", " ").title()}.'
     }
 }
+
+@case_router.get(
+    "/{case_id}/images",
+    response_model=list[CaseImageResponse],
+)
+def get_case_images(
+    case_id: int,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    return repo_get_case_images(
+        db=db,
+        case_id=case_id,
+    )
+
+
+@case_router.get(
+    "/{case_id}/images/files/{stored_name}",
+    include_in_schema=False,
+)
+def get_case_image_file(
+    case_id: int,
+    stored_name: str,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    expected_location = f"/cases/{case_id}/images/files/{stored_name}"
+    case_images = repo_get_case_images(db=db, case_id=case_id)
+
+    if not any(image.location == expected_location for image in case_images):
+        raise HTTPException(status_code=404, detail="Image not found.")
+
+    image_path = _case_image_path(case_id, stored_name)
+
+    if not image_path.is_file():
+        raise HTTPException(status_code=404, detail="Image file not found.")
+
+    extension = image_path.suffix.lower()
+
+    return FileResponse(
+        path=image_path,
+        media_type=IMAGE_MEDIA_TYPES.get(extension, "application/octet-stream"),
+        headers={
+            "Cache-Control": "private, max-age=3600",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+@case_router.post(
+    "/{case_id}/images",
+    response_model=CaseImageResponse,
+    status_code=201,
+)
+async def create_case_image(
+    case_id: int,
+    section_key: str = Form(...),
+    evidence_type: str = Form("Other"),
+    caption: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    section_key = section_key.strip()
+
+    if not section_key:
+        raise HTTPException(status_code=400, detail="Section key is required.")
+
+    existing_images = repo_get_case_images(db=db, case_id=case_id)
+    section_images = [
+        image for image in existing_images
+        if image.section_key == section_key
+    ]
+
+    if len(section_images) >= 4:
+        raise HTTPException(
+            status_code=400,
+            detail="This section already has the maximum of 4 images.",
+        )
+
+    try:
+        content = await file.read((8 * 1024 * 1024) + 1)
+    finally:
+        await file.close()
+
+    extension = _validate_image_bytes(file.filename or "", content)
+    stored_name = f"{uuid.uuid4().hex}{extension}"
+    image_directory = _case_image_directory(case_id)
+    image_directory.mkdir(parents=True, exist_ok=True)
+    image_path = _case_image_path(case_id, stored_name)
+    image_path.write_bytes(content)
+
+    next_sort_order = max(
+        (image.sort_order for image in section_images),
+        default=-1,
+    ) + 1
+
+    original_name = Path(file.filename or "image").name[:255] or "image"
+
+    image = CaseImage(
+        case_id=case.id,
+        section_key=section_key,
+        location=f"/cases/{case_id}/images/files/{stored_name}",
+        name=original_name,
+        evidence_type=evidence_type.strip() or "Other",
+        caption=caption,
+        sort_order=next_sort_order,
+    )
+
+    try:
+        return repo_create_case_image(
+            db=db,
+            image=image,
+        )
+    except Exception:
+        image_path.unlink(missing_ok=True)
+        raise
+
+
+@case_router.patch(
+    "/{case_id}/images",
+    response_model=list[CaseImageResponse],
+)
+def update_case_images(
+    case_id: int,
+    request: CaseImageBulkUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    case_images = repo_get_case_images(
+        db=db,
+        case_id=case_id,
+    )
+    images_by_id = {image.id: image for image in case_images}
+
+    requested_ids = [item.id for item in request.items]
+    if len(requested_ids) != len(set(requested_ids)):
+        raise HTTPException(
+            status_code=400,
+            detail="Duplicate image IDs are not allowed.",
+        )
+
+    updated_images = []
+
+    try:
+        for item in request.items:
+            image = images_by_id.get(item.id)
+
+            if image is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Image {item.id} not found.",
+                )
+
+            if item.section_key is not None:
+                section_key = item.section_key.strip()
+                if not section_key:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Section key cannot be empty.",
+                    )
+                image.section_key = section_key
+
+            image.evidence_type = item.evidence_type.strip() or "Other"
+            image.caption = item.caption
+            image.sort_order = max(0, item.sort_order)
+
+            repo_update_case_image(
+                db=db,
+                image=image,
+                commit=False,
+            )
+            updated_images.append(image)
+
+        db.commit()
+
+        for image in updated_images:
+            db.refresh(image)
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+    return repo_get_case_images(
+        db=db,
+        case_id=case_id,
+    )
+
+
+@case_router.patch(
+    "/{case_id}/images/{image_id}",
+    response_model=CaseImageResponse,
+)
+def update_case_image(
+    case_id: int,
+    image_id: int,
+    request: CaseImageUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    image = repo_get_case_image(
+        db=db,
+        case_id=case_id,
+        image_id=image_id,
+    )
+
+    if image is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Image not found.",
+        )
+
+    if request.section_key is not None:
+        section_key = request.section_key.strip()
+        if not section_key:
+            raise HTTPException(status_code=400, detail="Section key cannot be empty.")
+        image.section_key = section_key
+
+    # Image locations are generated only by the upload endpoint. External links
+    # cannot replace an uploaded file.
+    if request.location is not None and request.location != image.location:
+        raise HTTPException(
+            status_code=400,
+            detail="Image location cannot be changed directly.",
+        )
+
+    if request.name is not None:
+        image.name = Path(request.name).name[:255] or image.name
+
+    if request.evidence_type is not None:
+        image.evidence_type = request.evidence_type.strip() or "Other"
+
+    if request.caption is not None:
+        image.caption = request.caption
+
+    if request.sort_order is not None:
+        image.sort_order = max(0, request.sort_order)
+
+    return repo_update_case_image(
+        db=db,
+        image=image,
+    )
+
+
+@case_router.delete("/{case_id}/images/{image_id}")
+def delete_case_image(
+    case_id: int,
+    image_id: int,
+    db: Session = Depends(get_db),
+):
+    case = get_case_by_id(
+        db=db,
+        case_id=case_id,
+    )
+
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found.",
+        )
+
+    image = repo_get_case_image(
+        db=db,
+        case_id=case_id,
+        image_id=image_id,
+    )
+
+    if image is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Image not found.",
+        )
+
+    stored_name = _stored_filename_from_location(image.location)
+
+    repo_delete_case_image(
+        db=db,
+        image=image,
+    )
+
+    if stored_name:
+        _case_image_path(case_id, stored_name).unlink(missing_ok=True)
+
+    return {
+        "success": True,
+    }
+

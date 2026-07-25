@@ -1265,202 +1265,33 @@ limitation, reflection, or next step from the project." } %} {% set why_text = {
 
     window.VisualEvidenceInstances = {};
 
-    const visualEvidenceSaveTimers = {};
-    const visualEvidenceSavedState = {};
-
-    function visualEvidenceErrorMessage(payload, fallback) {
-      if (!payload) return fallback;
-      if (typeof payload.detail === "string") return payload.detail;
-      if (Array.isArray(payload.detail) && payload.detail[0]?.msg) {
-        return payload.detail[0].msg;
-      }
-      return fallback;
-    }
-
-    function visualEvidencePayload(key, items) {
-      return items.map((item, index) => ({
-        id: Number(item.id),
-        section_key: key,
-        evidence_type: item.type || "Other",
-        caption: item.caption || "",
-        sort_order: index,
-      }));
-    }
-
-    function visualEvidenceSignature(key, items) {
-      return JSON.stringify(visualEvidencePayload(key, items));
-    }
-
-    function uploadVisualEvidence(key, file, helpers) {
-      const row = helpers.addUploadingRow(file);
-      const formData = new FormData();
-      formData.append("section_key", key);
-      formData.append("evidence_type", "Other");
-      formData.append("caption", "");
-      formData.append("file", file);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `/cases/{{ case.id }}/images`);
-      xhr.responseType = "json";
-
-      xhr.upload.addEventListener("progress", (event) => {
-        if (row.cancelled()) {
-          xhr.abort();
-          return;
-        }
-
-        if (event.lengthComputable) {
-          row.setProgress((event.loaded / event.total) * 100);
-        }
-      });
-
-      xhr.addEventListener("load", () => {
-        const data = xhr.response || {};
-
-        if (row.cancelled()) {
-          if (xhr.status >= 200 && xhr.status < 300 && data.id) {
-            fetch(`/cases/{{ case.id }}/images/${data.id}`, { method: "DELETE" });
-          }
-          return;
-        }
-
-        if (xhr.status < 200 || xhr.status >= 300) {
-          row.fail(visualEvidenceErrorMessage(data, `Couldn't upload "${file.name}".`));
-          return;
-        }
-
-        row.done({
-          id: data.id,
-          url: data.location,
-          name: data.name || file.name,
-          type: data.evidence_type || "Other",
-          caption: data.caption || "",
-        });
-      });
-
-      xhr.addEventListener("error", () => {
-        if (!row.cancelled()) row.fail(`Couldn't upload "${file.name}".`);
-      });
-
-      xhr.addEventListener("abort", () => {
-        if (!row.cancelled()) row.fail(`Upload cancelled for "${file.name}".`);
-      });
-
-      xhr.send(formData);
-    }
-
-    function persistVisualEvidence(key, items, immediate = false) {
-      const payloadItems = visualEvidencePayload(key, items);
-      const signature = JSON.stringify(payloadItems);
-
-      if (visualEvidenceSavedState[key] === signature) return;
-
-      clearTimeout(visualEvidenceSaveTimers[key]);
-
-      const save = async () => {
-        try {
-          const response = await fetch(`/cases/{{ case.id }}/images`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: payloadItems }),
-          });
-          const data = await response.json().catch(() => ({}));
-
-          if (!response.ok) {
-            throw new Error(
-              visualEvidenceErrorMessage(data, "Couldn't save visual evidence."),
-            );
-          }
-
-          visualEvidenceSavedState[key] = signature;
-        } catch (error) {
-          console.error(error);
-          await loadVisualEvidence();
-          window.VisualEvidenceInstances[key]?._showError(error.message);
-        }
-      };
-
-      if (immediate) {
-        save();
-      } else {
-        visualEvidenceSaveTimers[key] = setTimeout(save, 500);
-      }
-    }
-
-    async function loadVisualEvidence() {
-      try {
-        const response = await fetch(`/cases/{{ case.id }}/images`);
-        const images = await response.json().catch(() => []);
-
-        if (!response.ok || !Array.isArray(images)) {
-          throw new Error("Couldn't load visual evidence.");
-        }
-
-        Object.entries(window.VisualEvidenceInstances).forEach(([key, instance]) => {
-          const sectionImages = images
-            .filter((image) => image.section_key === key)
-            .sort((a, b) => {
-              const orderDiff = (a.sort_order || 0) - (b.sort_order || 0);
-              return orderDiff || a.id - b.id;
-            })
-            .map((image) => ({
-              id: image.id,
-              url: image.location,
-              name: image.name || "Image",
-              type: image.evidence_type || "Other",
-              caption: image.caption || "",
-            }));
-
-          instance.setItems(sectionImages);
-          visualEvidenceSavedState[key] = visualEvidenceSignature(key, sectionImages);
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
     document.querySelectorAll(".ve-widget").forEach((el) => {
       const key = el.dataset.key;
       window.VisualEvidenceInstances[key] = new VisualEvidenceWidget(el, {
         key,
         max: parseInt(el.dataset.max || "4", 10),
 
-        onFilesSelected: (files, helpers) => {
-          files.forEach((file) => uploadVisualEvidence(key, file, helpers));
-        },
+        // TODO (backend): call your upload endpoint here, e.g.
+        //   POST /cases/{{ case.id }}/sections/{key}/evidence  (multipart)
+        // then call helpers.addUploadingRow(file) before the request and
+        // row.setProgress(pct) / row.done({ id, url, name }) / row.fail(msg)
+        // as it progresses.
+        onFilesSelected: null,
 
+        // TODO (backend): persist type/caption/order, e.g.
+        //   PATCH /cases/{{ case.id }}/sections/{key}/evidence
+        //   body: { items: [{ id, type, caption }, ...] }
         onChange: (items) => {
-          persistVisualEvidence(key, items);
+          console.log(`[visual evidence] ${key} changed:`, items);
         },
 
-        onRemove: async (item) => {
-          clearTimeout(visualEvidenceSaveTimers[key]);
-
-          try {
-            const response = await fetch(`/cases/{{ case.id }}/images/${item.id}`, {
-              method: "DELETE",
-            });
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-              throw new Error(
-                visualEvidenceErrorMessage(data, "Couldn't remove the image."),
-              );
-            }
-
-            const remainingItems = window.VisualEvidenceInstances[key]?.getItems() || [];
-            visualEvidenceSavedState[key] = "";
-            persistVisualEvidence(key, remainingItems, true);
-          } catch (error) {
-            console.error(error);
-            await loadVisualEvidence();
-            window.VisualEvidenceInstances[key]?._showError(error.message);
-          }
+        // TODO (backend): delete the file from storage, e.g.
+        //   DELETE /cases/{{ case.id }}/evidence/{item.id}
+        onRemove: (item) => {
+          console.log(`[visual evidence] ${key} removed:`, item);
         },
       });
     });
-
-    loadVisualEvidence();
   })();
 </script>
 {% endblock %}
