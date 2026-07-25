@@ -61,7 +61,61 @@ limitation, reflection, or next step from the project." } %} {% set why_text = {
       </p>
     </div>
   </div>
+  <div
+  id="autosave-alert"
+  class="mt-6 inline-flex items-center gap-2 rounded-lg border border-[#D6E4FF] bg-[#F5F8FF] px-[10px] py-[7px]"
+>
+  <!-- Info Icon -->
+  <svg
+    class="h-3 w-3 shrink-0"
+    viewBox="0 0 12 12"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="6"
+      cy="6"
+      r="4.75"
+      stroke="#12B76A"
+      stroke-width="1.25"
+    />
+    <path
+      d="M6 5V8"
+      stroke="#12B76A"
+      stroke-width="1.25"
+      stroke-linecap="round"
+    />
+    <circle cx="6" cy="3.5" r="0.7" fill="#12B76A" />
+  </svg>
 
+  <!-- Message -->
+  <span
+    class="text-[11px] font-normal leading-[14px] text-[#12B76A]"
+  >
+    Autosaves 5 seconds after typing stops.
+  </span>
+
+  <!-- Close -->
+  <button
+    type="button"
+    id="close-autosave-alert"
+    class="ml-1 shrink-0 text-[#667085] transition hover:text-[#344054]"
+  >
+    <svg
+      class="h-3 w-3"
+      viewBox="0 0 12 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M3 3L9 9M9 3L3 9"
+        stroke="currentColor"
+        stroke-width="1.25"
+        stroke-linecap="round"
+      />
+    </svg>
+  </button>
+</div>
   <div class="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
     <div class="space-y-5">
       {% for section in sections %} {% set style = status_styles[section.status]
@@ -150,25 +204,12 @@ limitation, reflection, or next step from the project." } %} {% set why_text = {
         </div>
 
         <div class="px-6 pb-5">
-          <div class="flex items-center justify-between rounded-[10px] border border-dashed border-[#D0D5DD] bg-white px-3 py-3">
-            <div class="flex items-center gap-2">
-              <svg
-                class="h-4 w-4 text-[#667085]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path d="M12 3v12"></path>
-                <path d="m7 8 5-5 5 5"></path>
-                <path d="M5 21h14"></path>
-              </svg>
-
-              <span class="text-xs font-medium text-[#344054]">Add visual evidence</span>
-            </div>
-
-            <span class="text-[11px] font-medium text-[#98A2B3]">0 / 4</span>
-          </div>
+          <div
+            id="ve-{{ section.key }}"
+            class="ve-widget"
+            data-key="{{ section.key }}"
+            data-max="4"
+          ></div>
         </div>
       </div>
 
@@ -816,5 +857,443 @@ limitation, reflection, or next step from the project." } %} {% set why_text = {
 
     recalcSidebar();
   }
+    document
+    .getElementById("close-autosave-alert")
+    ?.addEventListener("click", () => {
+      document.getElementById("autosave-alert")?.remove();
+    });
+</script>
+
+<script>
+  /* =========================================================================
+     Visual evidence widget
+     -------------------------------------------------------------------------
+     UI/UX only — one instance per section (see the init loop at the bottom).
+     Uses the same Tailwind tokens as the rest of this template so it doesn't
+     need its own stylesheet.
+
+     Wire your own persistence through the three callbacks passed to init():
+       onFilesSelected(files, helpers)  -> call your upload endpoint
+       onChange(items)                  -> persist type/caption/order
+       onRemove(item)                   -> delete from storage
+
+     helpers.addUploadingRow(file) returns a row controller:
+       row.setProgress(pct)
+       row.fail(message)
+       row.done({ id, url, name })   // commits the item as a real card
+
+     Each widget instance is kept in window.VisualEvidenceInstances[key] so
+     your save flow (e.g. inside autoSave / saveCaseStatus) can call
+     instance.getItems() when it's ready to persist.
+     ========================================================================= */
+  (function () {
+    const EVIDENCE_TYPES = [
+      "Before", "After", "Research", "Wireframe",
+      "User Flow", "Final UI", "Data", "Other",
+    ];
+    const ACCEPTED_EXT = ["png", "jpg", "jpeg", "webp", "svg"];
+    const MAX_RASTER_MB = 8;
+    const MAX_SVG_MB = 2;
+
+    const ICON_UPLOAD = `
+      <svg class="h-4 w-4 text-[#667085]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 3v12"></path><path d="m7 8 5-5 5 5"></path><path d="M5 21h14"></path>
+      </svg>`;
+    const ICON_CHEVRON = `
+      <svg class="ve-chevron h-3.5 w-3.5 flex-none text-[#98A2B3] transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>`;
+    const ICON_CLOSE = `
+      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>`;
+
+    function extOf(name) { return (name.split(".").pop() || "").toLowerCase(); }
+
+    class VisualEvidenceWidget {
+      constructor(root, opts) {
+        this.root = root;
+        this.opts = Object.assign({
+          key: root.dataset.key || "",
+          max: parseInt(root.dataset.max || "4", 10),
+          types: EVIDENCE_TYPES,
+          onFilesSelected: null,
+          onChange: null,
+          onRemove: null,
+        }, opts);
+
+        this.items = [];
+        this.expanded = false;
+        this._idSeq = 1;
+
+        this._build();
+        this._render();
+      }
+
+      _build() {
+        this.root.innerHTML = "";
+
+        // header (mirrors the original static "Add visual evidence" bar)
+        this.headerEl = document.createElement("button");
+        this.headerEl.type = "button";
+        this.headerEl.className =
+          "ve-header flex w-full items-center justify-between rounded-[10px] border border-dashed border-[#D0D5DD] bg-white px-3 py-3 text-left transition-colors hover:bg-[#F9FAFB]";
+        this.headerEl.innerHTML = `
+          <div class="flex items-center gap-2">
+            ${ICON_UPLOAD}
+            <span class="ve-label text-xs font-medium text-[#344054]">Add visual evidence</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="ve-count text-[11px] font-medium text-[#98A2B3]">0 / ${this.opts.max}</span>
+            ${ICON_CHEVRON}
+          </div>`;
+        this.headerEl.addEventListener("click", () => {
+          this.expanded = !this.expanded;
+          this._syncExpanded();
+        });
+        this.root.appendChild(this.headerEl);
+
+        // body
+        this.bodyEl = document.createElement("div");
+        this.bodyEl.className =
+          "ve-body hidden rounded-b-[10px] border border-t-0 border-[#E4E7EC] bg-white p-3";
+        this.root.appendChild(this.bodyEl);
+
+        this.gridEl = document.createElement("div");
+        this.gridEl.className = "ve-grid grid grid-cols-1 gap-3 sm:grid-cols-2";
+        this.bodyEl.appendChild(this.gridEl);
+
+        this.uploadingWrap = document.createElement("div");
+        this.uploadingWrap.className = "ve-uploading-wrap space-y-2";
+        this.bodyEl.appendChild(this.uploadingWrap);
+
+        this.dropEl = document.createElement("div");
+        this.dropEl.className =
+          "ve-drop mt-3 cursor-pointer rounded-[10px] border border-dashed border-[#D0D5DD] bg-[#FAFAFA] px-3 py-6 text-center transition-colors hover:border-[#4F6BFF] hover:bg-[#F5F8FF]";
+        this.dropEl.innerHTML = `
+          <div class="text-xs text-[#667085]">
+            Drop images here or
+            <button type="button" class="ve-browse font-medium text-[#4F6BFF] underline">browse</button>
+          </div>
+          <div class="mt-1 text-[11px] text-[#98A2B3]">
+            PNG, JPG, WEBP ≤ ${MAX_RASTER_MB} MB &middot; SVG ≤ ${MAX_SVG_MB} MB
+          </div>
+          <input type="file" class="hidden" accept=".png,.jpg,.jpeg,.webp,.svg" multiple>`;
+        this.bodyEl.appendChild(this.dropEl);
+
+        this.errorEl = document.createElement("div");
+        this.errorEl.className = "ve-error mt-2 hidden text-xs text-[#B91C1C]";
+        this.bodyEl.appendChild(this.errorEl);
+
+        const fileInput = this.dropEl.querySelector('input[type="file"]');
+        this.dropEl.querySelector(".ve-browse").addEventListener("click", (e) => {
+          e.stopPropagation();
+          fileInput.click();
+        });
+        this.dropEl.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", (e) => {
+          this._handleFiles(Array.from(e.target.files || []));
+          fileInput.value = "";
+        });
+
+        ["dragenter", "dragover"].forEach((ev) =>
+          this.dropEl.addEventListener(ev, (e) => {
+            e.preventDefault();
+            this.dropEl.classList.add("border-[#4F6BFF]", "bg-[#F5F8FF]");
+          }),
+        );
+        ["dragleave", "drop"].forEach((ev) =>
+          this.dropEl.addEventListener(ev, (e) => {
+            e.preventDefault();
+            this.dropEl.classList.remove("border-[#4F6BFF]", "bg-[#F5F8FF]");
+          }),
+        );
+        this.dropEl.addEventListener("drop", (e) => {
+          this._handleFiles(Array.from(e.dataTransfer.files || []));
+        });
+      }
+
+      _syncExpanded() {
+        this.bodyEl.classList.toggle("hidden", !this.expanded);
+        this.headerEl.classList.toggle("border-dashed", !this.expanded);
+        this.headerEl.classList.toggle("border-solid", this.expanded);
+        this.headerEl.classList.toggle("border-[#E4E7EC]", this.expanded);
+        this.headerEl.classList.toggle("border-[#D0D5DD]", !this.expanded);
+        this.headerEl.classList.toggle("rounded-b-none", this.expanded);
+        this.headerEl.querySelector(".ve-chevron").classList.toggle("rotate-180", this.expanded);
+      }
+
+      _showError(msg) {
+        this.errorEl.textContent = msg;
+        this.errorEl.classList.remove("hidden");
+        clearTimeout(this._errTimer);
+        this._errTimer = setTimeout(() => this.errorEl.classList.add("hidden"), 4000);
+      }
+
+      _slotsLeft() {
+        return this.opts.max - this.items.length - this.uploadingWrap.children.length;
+      }
+
+      _handleFiles(files) {
+        if (!files.length) return;
+        if (!this.expanded) { this.expanded = true; this._syncExpanded(); }
+
+        const left = this._slotsLeft();
+        if (left <= 0) {
+          this._showError(`You've reached the limit of ${this.opts.max} images.`);
+          return;
+        }
+
+        const accepted = [];
+        for (const f of files) {
+          const ext = extOf(f.name);
+          if (!ACCEPTED_EXT.includes(ext)) {
+            this._showError(`"${f.name}" isn't a supported format.`);
+            continue;
+          }
+          const limitMb = ext === "svg" ? MAX_SVG_MB : MAX_RASTER_MB;
+          if (f.size > limitMb * 1024 * 1024) {
+            this._showError(`"${f.name}" is over the ${limitMb} MB limit.`);
+            continue;
+          }
+          accepted.push(f);
+          if (accepted.length >= left) break;
+        }
+        if (!accepted.length) return;
+        if (files.length > left) {
+          this._showError(`Only ${left} more image${left === 1 ? "" : "s"} can be added to this section.`);
+        }
+
+        const helpers = {
+          addUploadingRow: (file) => this._addUploadingRow(file),
+          reject: (msg) => this._showError(msg),
+        };
+
+        if (typeof this.opts.onFilesSelected === "function") {
+          this.opts.onFilesSelected(accepted, helpers);
+        } else {
+          // Local-preview fallback so the UI is testable before upload is wired up.
+          accepted.forEach((file) => {
+            const row = this._addUploadingRow(file);
+            const reader = new FileReader();
+            reader.onload = () => {
+              let pct = 0;
+              const t = setInterval(() => {
+                pct += 20 + Math.random() * 20;
+                if (pct >= 100) {
+                  clearInterval(t);
+                  row.done({ id: "local-" + this._idSeq++, url: reader.result, name: file.name });
+                } else {
+                  row.setProgress(Math.min(pct, 99));
+                }
+              }, 120);
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+      }
+
+      _addUploadingRow(file) {
+        const rowEl = document.createElement("div");
+        rowEl.className = "ve-uploading flex items-center gap-2 rounded-lg border border-[#E4E7EC] px-2.5 py-2 text-xs";
+        rowEl.innerHTML = `
+          <span class="h-3.5 w-3.5 flex-none animate-spin rounded-full border-2 border-[#D0D5DD] border-t-[#4F6BFF]"></span>
+          <span class="ve-fname min-w-0 flex-1 truncate text-[#667085]">${file.name}</span>
+          <span class="ve-pct flex-none text-[#98A2B3]">0%</span>
+          <button type="button" class="ve-cancel flex-none text-[#667085] underline hover:text-[#344054]">Cancel</button>`;
+        this.uploadingWrap.appendChild(rowEl);
+
+        const state = { cancelled: false };
+        const pctEl = rowEl.querySelector(".ve-pct");
+
+        const remove = () => { rowEl.remove(); this._updateHeader(); };
+
+        rowEl.querySelector(".ve-cancel").addEventListener("click", () => {
+          state.cancelled = true;
+          remove();
+        });
+
+        this._updateHeader();
+
+        return {
+          setProgress: (pct) => { if (!state.cancelled) pctEl.textContent = Math.round(pct) + "%"; },
+          fail: (message) => {
+            if (state.cancelled) return;
+            remove();
+            this._showError(message || `Couldn't upload "${file.name}".`);
+          },
+          done: (item) => {
+            if (state.cancelled) return;
+            remove();
+            this._commitItem(Object.assign({ type: this.opts.types[0], caption: "" }, item));
+          },
+          cancelled: () => state.cancelled,
+        };
+      }
+
+      _commitItem(item) {
+        item.id = item.id || "ve-" + this._idSeq++;
+        this.items.push(item);
+        this._render();
+        this._emitChange();
+      }
+
+      _emitChange() {
+        if (typeof this.opts.onChange === "function") {
+          this.opts.onChange(this.items.map((it) => ({
+            id: it.id, url: it.url, name: it.name, type: it.type, caption: it.caption,
+          })));
+        }
+      }
+
+      _removeItem(id) {
+        const idx = this.items.findIndex((i) => i.id === id);
+        if (idx === -1) return;
+        const [removed] = this.items.splice(idx, 1);
+        this._render();
+        this._emitChange();
+        if (typeof this.opts.onRemove === "function") this.opts.onRemove(removed);
+      }
+
+      _moveItem(id, dir) {
+        const idx = this.items.findIndex((i) => i.id === id);
+        const swap = idx + dir;
+        if (idx === -1 || swap < 0 || swap >= this.items.length) return;
+        [this.items[idx], this.items[swap]] = [this.items[swap], this.items[idx]];
+        this._render();
+        this._emitChange();
+      }
+
+      _openPreview(item) {
+        const overlay = document.createElement("div");
+        overlay.className = "fixed inset-0 z-50 flex items-center justify-center bg-[#101828]/60 p-6";
+        overlay.innerHTML = `
+          <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div class="flex justify-end p-2">
+              <button type="button" class="ve-lightbox-close flex h-7 w-7 items-center justify-center rounded-full border border-[#E4E7EC] text-[#667085] hover:bg-[#F9FAFB] hover:text-[#344054]">
+                ${ICON_CLOSE}
+              </button>
+            </div>
+            <img class="max-h-[420px] w-full bg-[#F2F4F7] object-contain" src="${item.url}" alt="${(item.caption || item.type || "preview").replace(/"/g, "&quot;")}">
+            <div class="px-4 pb-4 pt-1 text-center text-sm text-[#667085]">${item.type}${item.caption ? " — " + item.caption : ""}</div>
+          </div>`;
+        const close = () => overlay.remove();
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+        overlay.querySelector(".ve-lightbox-close").addEventListener("click", close);
+        document.addEventListener("keydown", function esc(e) {
+          if (e.key === "Escape") { close(); document.removeEventListener("keydown", esc); }
+        });
+        document.body.appendChild(overlay);
+      }
+
+      _updateHeader() {
+        const count = this.items.length + this.uploadingWrap.children.length;
+        this.headerEl.querySelector(".ve-label").textContent =
+          count === 0 ? "Add visual evidence" : "Visual evidence";
+        this.headerEl.querySelector(".ve-count").textContent = `${count} / ${this.opts.max}`;
+        this.dropEl.classList.toggle("hidden", this._slotsLeft() <= 0);
+      }
+
+      _render() {
+        this._updateHeader();
+        this.gridEl.innerHTML = "";
+
+        this.items.forEach((item, idx) => {
+          const card = document.createElement("div");
+          card.className = "ve-item flex gap-3 rounded-xl border border-[#E4E7EC] p-2.5";
+
+          const thumb = document.createElement("div");
+          thumb.className = "h-[78px] w-16 flex-none overflow-hidden rounded-lg border border-[#D0D5DD] bg-[#F9FAFB]";
+          if (item.url) {
+            const img = document.createElement("img");
+            img.src = item.url;
+            img.alt = item.name || "";
+            img.className = "h-full w-full object-cover";
+            thumb.appendChild(img);
+          }
+
+          const main = document.createElement("div");
+          main.className = "flex min-w-0 flex-1 flex-col gap-1.5";
+
+          const select = document.createElement("select");
+          select.className =
+            "w-full rounded-lg border border-[#D0D5DD] bg-white px-2 py-1.5 text-xs text-[#344054] outline-none focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/10";
+          this.opts.types.forEach((t) => {
+            const o = document.createElement("option");
+            o.value = t; o.textContent = t;
+            if (t === item.type) o.selected = true;
+            select.appendChild(o);
+          });
+          select.addEventListener("change", () => { item.type = select.value; this._emitChange(); });
+
+          const caption = document.createElement("input");
+          caption.type = "text";
+          caption.placeholder = "Add a caption...";
+          caption.value = item.caption || "";
+          caption.className =
+            "w-full rounded-lg border border-[#D0D5DD] bg-white px-2 py-1.5 text-xs text-[#344054] placeholder:text-[#98A2B3] outline-none focus:border-[#4F6BFF] focus:ring-2 focus:ring-[#4F6BFF]/10";
+          caption.addEventListener("input", () => { item.caption = caption.value; this._emitChange(); });
+
+          const actions = document.createElement("div");
+          actions.className = "mt-0.5 flex items-center justify-between text-[11px]";
+          actions.innerHTML = `
+            <div class="flex gap-2.5">
+              <button type="button" class="ve-up text-[#667085] hover:text-[#344054] disabled:cursor-not-allowed disabled:text-[#D0D5DD]" ${idx === 0 ? "disabled" : ""}>↑ Up</button>
+              <button type="button" class="ve-down text-[#667085] hover:text-[#344054] disabled:cursor-not-allowed disabled:text-[#D0D5DD]" ${idx === this.items.length - 1 ? "disabled" : ""}>↓ Down</button>
+            </div>
+            <div class="flex gap-2.5">
+              <button type="button" class="ve-preview text-[#667085] hover:text-[#344054]">Preview</button>
+              <button type="button" class="ve-remove text-[#B91C1C] hover:text-[#991B1B]">Remove</button>
+            </div>`;
+          actions.querySelector(".ve-up").addEventListener("click", () => this._moveItem(item.id, -1));
+          actions.querySelector(".ve-down").addEventListener("click", () => this._moveItem(item.id, 1));
+          actions.querySelector(".ve-preview").addEventListener("click", () => this._openPreview(item));
+          actions.querySelector(".ve-remove").addEventListener("click", () => this._removeItem(item.id));
+
+          main.append(select, caption, actions);
+          card.append(thumb, main);
+          this.gridEl.appendChild(card);
+        });
+      }
+
+      // Public API for hydration / wiring real persistence.
+      getItems() { return this.items.map((it) => ({ ...it })); }
+      setItems(items) {
+        this.items = items.map((it) => ({ type: this.opts.types[0], caption: "", ...it }));
+        this._render();
+        if (this.items.length && !this.expanded) { this.expanded = true; this._syncExpanded(); }
+      }
+    }
+
+    window.VisualEvidenceInstances = {};
+
+    document.querySelectorAll(".ve-widget").forEach((el) => {
+      const key = el.dataset.key;
+      window.VisualEvidenceInstances[key] = new VisualEvidenceWidget(el, {
+        key,
+        max: parseInt(el.dataset.max || "4", 10),
+
+        // TODO (backend): call your upload endpoint here, e.g.
+        //   POST /cases/{{ case.id }}/sections/{key}/evidence  (multipart)
+        // then call helpers.addUploadingRow(file) before the request and
+        // row.setProgress(pct) / row.done({ id, url, name }) / row.fail(msg)
+        // as it progresses.
+        onFilesSelected: null,
+
+        // TODO (backend): persist type/caption/order, e.g.
+        //   PATCH /cases/{{ case.id }}/sections/{key}/evidence
+        //   body: { items: [{ id, type, caption }, ...] }
+        onChange: (items) => {
+          console.log(`[visual evidence] ${key} changed:`, items);
+        },
+
+        // TODO (backend): delete the file from storage, e.g.
+        //   DELETE /cases/{{ case.id }}/evidence/{item.id}
+        onRemove: (item) => {
+          console.log(`[visual evidence] ${key} removed:`, item);
+        },
+      });
+    });
+  })();
 </script>
 {% endblock %}
