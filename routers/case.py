@@ -42,7 +42,6 @@ from services.ai.case_editor import evaluate_field_status, CaseEditorError
 from services.case_status import calculate_case_status
 from services.export import (
     build_case_docx,
-    build_case_pdf,
     build_default_preview,
     build_sections,
     image_to_dict,
@@ -451,46 +450,6 @@ def update_export_preview(
     }
 
 
-@case_router.post("/{case_id}/export/pdf")
-def export_case_pdf(
-    case_id: int,
-    db: Session = Depends(get_db),
-):
-    case = get_case_by_id(db=db, case_id=case_id)
-    if case is None:
-        raise HTTPException(status_code=404, detail="Case not found.")
-
-    result = json.loads(case.generated_json)
-    images = repo_get_case_images(db=db, case_id=case_id)
-    _, preview, sections = _load_export_preview(db, case, result, images)
-    image_dicts = [image_to_dict(image) for image in images]
-
-    try:
-        output = build_case_pdf(
-            case=case,
-            sections=sections,
-            all_images=image_dicts,
-            preview=preview,
-        )
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"PDF export failed: {exc}",
-        ) from exc
-
-    filename = safe_filename(case.title) + ".pdf"
-    return StreamingResponse(
-        BytesIO(output),
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": (
-                "attachment; filename*=UTF-8''" + quote(filename)
-            ),
-            "Cache-Control": "no-store",
-        },
-    )
-
-
 @case_router.post("/{case_id}/export/docx")
 def export_case_docx(
     case_id: int,
@@ -869,3 +828,4 @@ def delete_case_image(
     return {
         "success": True,
     }
+

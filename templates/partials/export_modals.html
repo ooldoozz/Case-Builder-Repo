@@ -1,22 +1,35 @@
+{% set is_complete = (progress|default(0)) >= 100 %}
+
 <div id="confirm-export-modal" class="export-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-export-title">
   <div class="export-modal__backdrop" data-close-modal></div>
-  <div class="export-modal__card">
+  <div class="export-modal__card export-modal__card--initial">
     <button type="button" class="export-modal__close" data-close-modal aria-label="Close">×</button>
-    <h2 id="confirm-export-title">Export your case study?</h2>
+    <h2 id="confirm-export-title">{{ "Ready to export" if is_complete else "Export your case study?" }}</h2>
     <p>
-      {% if issues_count > 0 %}
-      {{ issues_count }} section{{ "s" if issues_count != 1 else "" }} {{ "are" if issues_count != 1 else "is" }} marked as Missing, Weak or Unclear. You can still export the current Preview.
+      {% if is_complete %}
+      Your case study is complete and ready to use.
       {% else %}
-      Your case study is ready. The file will use the current Preview layout.
+      Your case study still contains sections marked as Missing, Weak or Unclear. You can export it now, but improving these sections first will create a stronger portfolio presentation.
       {% endif %}
     </p>
-    <div class="export-quality-summary">
+
+    {% if is_complete %}
+    <div class="export-ready-box">
+      <strong>All required sections completed</strong>
+      <span>{{ total_sections }} sections reviewed · Ready for export</span>
+    </div>
+    {% else %}
+    <div class="export-quality-summary export-quality-summary--initial">
       {% for key, label in [("missing", "Missing"), ("weak", "Weak"), ("unclear", "Unclear"), ("complete", "Complete")] %}
       <div><span class="status-dot status-dot--{{ key }}"></span><span>{{ label }}</span><strong>{{ counts[key] }}</strong></div>
       {% endfor %}
+      <small>You can always come back and improve your case study later.</small>
     </div>
+    {% endif %}
+
     <div class="export-modal__actions">
-      <button id="continue-to-format" type="button" class="export-button export-button--primary export-button--wide">Choose file type</button>
+      <button id="continue-to-format" type="button" class="export-button export-button--primary export-button--wide">{{ "Choose Export Format" if is_complete else "Export Anyway" }}</button>
+      {% if not is_complete %}<a href="/cases/{{ case.id }}/edit" class="export-button export-button--secondary export-button--wide">Review Issues</a>{% endif %}
       <button type="button" class="export-button export-button--ghost export-button--wide" data-close-modal>Cancel</button>
     </div>
   </div>
@@ -24,23 +37,32 @@
 
 <div id="format-export-modal" class="export-modal hidden" role="dialog" aria-modal="true" aria-labelledby="format-export-title">
   <div class="export-modal__backdrop" data-close-modal></div>
-  <div class="export-modal__card">
+  <div class="export-modal__card export-modal__card--initial">
     <button type="button" class="export-modal__close" data-close-modal aria-label="Close">×</button>
-    <h2 id="format-export-title">Choose file type</h2>
-    <p>PDF preserves the visual layout more closely. Word remains editable.</p>
-    <div class="format-grid">
-      <button type="button" class="format-card" data-export-format="pdf">
-        <span class="format-card__icon">PDF</span>
-        <span><strong>PDF</strong><small>Best for sharing</small></span>
-      </button>
+    <h2 id="format-export-title">Choose export format</h2>
+    <p>Select where you'd like to export your case study.</p>
+
+    <div class="format-grid format-grid--six">
       <button type="button" class="format-card" data-export-format="docx">
-        <span class="format-card__icon">DOCX</span>
-        <span><strong>Word</strong><small>Editable document</small></span>
+        <span class="format-card__icon">W</span>
+        <span><strong>Word</strong><small>Easy to edit</small></span>
       </button>
+      {% for title, icon, description in [
+        ("PDF", "PDF", "Unavailable"),
+        ("Figma", "F", "Coming soon"),
+        ("HTML", "</>", "Coming soon"),
+        ("Notion", "N", "Coming soon"),
+        ("Share", "↗", "Coming soon")
+      ] %}
+      <button type="button" class="format-card format-card--disabled" disabled aria-disabled="true">
+        <span class="format-card__soon">Soon</span>
+        <span class="format-card__icon">{{ icon }}</span>
+        <span><strong>{{ title }}</strong><small>{{ description }}</small></span>
+      </button>
+      {% endfor %}
     </div>
-    <div id="export-progress" class="export-progress hidden">
-      <span class="export-spinner"></span><span>Preparing your file…</span>
-    </div>
+
+    <div id="export-progress" class="export-progress hidden"><span class="export-spinner"></span><span>Preparing your Word file…</span></div>
     <div class="export-modal__actions">
       <button id="download-export-file" type="button" class="export-button export-button--primary export-button--wide" disabled>Export</button>
       <button type="button" class="export-button export-button--ghost export-button--wide" data-close-modal>Cancel</button>

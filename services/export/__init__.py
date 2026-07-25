@@ -1,5 +1,4 @@
 from .docx_exporter import build_case_docx
-from .pdf_exporter import build_case_pdf
 from .preview_defaults import (
     SECTION_DEFINITIONS,
     SECTION_KEYS,

@@ -520,6 +520,27 @@
     exportProgress.classList.add("hidden");
   }
 
+  const sidebarTabs = [...document.querySelectorAll("[data-sidebar-tab]")];
+  const sidebarPanels = [...document.querySelectorAll("[data-sidebar-panel]")];
+
+  function setSidebarTab(tabName) {
+    sidebarTabs.forEach((tab) => {
+      const isActive = tab.dataset.sidebarTab === tabName;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+    });
+
+    sidebarPanels.forEach((panel) => {
+      const isActive = panel.dataset.sidebarPanel === tabName;
+      panel.classList.toggle("is-active", isActive);
+      panel.hidden = !isActive;
+    });
+  }
+
+  sidebarTabs.forEach((tab) => {
+    tab.addEventListener("click", () => setSidebarTab(tab.dataset.sidebarTab));
+  });
+
   document.getElementById("open-export-modal").addEventListener("click", () => {
     openModal(confirmModal);
   });
@@ -531,7 +552,7 @@
     element.addEventListener("click", closeModals);
   });
 
-  document.querySelectorAll(".format-card").forEach((card) => {
+  document.querySelectorAll(".format-card[data-export-format]").forEach((card) => {
     card.addEventListener("click", () => {
       selectedExportFormat = card.dataset.exportFormat;
       document.querySelectorAll(".format-card").forEach((item) => {
@@ -565,7 +586,7 @@
       }
 
       const blob = await response.blob();
-      const extension = selectedExportFormat === "pdf" ? "pdf" : "docx";
+      const extension = "docx";
       const filename = filenameFromDisposition(
         response.headers.get("Content-Disposition"),
         `case-study.${extension}`

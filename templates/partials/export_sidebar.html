@@ -7,141 +7,63 @@
     </div>
   </div>
 
-  <div class="export-sidebar__scroll">
-    <p class="export-sidebar__section-label">Sections</p>
-    <nav class="export-section-nav" aria-label="Case study sections">
-      <button type="button" class="export-section-link is-active" data-target="preview-cover">
-        <span class="status-dot status-dot--cover"></span><span>Cover</span>
-      </button>
-      {% for section in sections %}
-      <button type="button" class="export-section-link" data-target="{{ section.key }}">
-        <span class="status-dot status-dot--{{ section.status }}"></span>
-        <span>{{ section.title }}</span>
-      </button>
-      {% endfor %}
-    </nav>
+  <div class="export-sidebar__tabs" role="tablist" aria-label="Preview sidebar">
+    <button
+      type="button"
+      class="export-sidebar__tab is-active"
+      id="sidebar-sections-tab"
+      role="tab"
+      aria-selected="true"
+      aria-controls="sidebar-sections-panel"
+      data-sidebar-tab="sections"
+    >
+      Sections
+    </button>
+    <button
+      type="button"
+      class="export-sidebar__tab"
+      id="sidebar-tools-tab"
+      role="tab"
+      aria-selected="false"
+      aria-controls="sidebar-tools-panel"
+      data-sidebar-tab="tools"
+    >
+      Tools
+    </button>
+  </div>
 
-    <section class="export-inspector" aria-label="Layout settings">
-      <div class="export-inspector__header">
-        <div>
-          <p class="export-sidebar__section-label">Layout settings</p>
-          <h2 id="inspector-title">Cover</h2>
-        </div>
-        <button id="reset-layout" type="button" class="export-text-button">Reset</button>
-      </div>
+  <div class="export-sidebar__body">
+    <section
+      id="sidebar-sections-panel"
+      class="export-sidebar__panel is-active"
+      role="tabpanel"
+      aria-labelledby="sidebar-sections-tab"
+      data-sidebar-panel="sections"
+    >
+      <p class="export-sidebar__section-label">Sections</p>
+      <nav class="export-section-nav" aria-label="Case study sections">
+        <button type="button" class="export-section-link is-active" data-target="preview-cover">
+          <span class="status-dot status-dot--cover"></span>
+          <span>Cover</span>
+        </button>
+        {% for section in sections %}
+        <button type="button" class="export-section-link" data-target="{{ section.key }}">
+          <span class="status-dot status-dot--{{ section.status }}"></span>
+          <span>{{ section.title }}</span>
+        </button>
+        {% endfor %}
+      </nav>
+    </section>
 
-      <div id="cover-controls" class="inspector-panel">
-        <label class="control-field">
-          <span>Cover image</span>
-          <select id="cover-image-select">
-            <option value="">No cover image</option>
-            {% for image in all_images %}
-            <option value="{{ image.id }}" {% if preview.cover.cover_image_id == image.id %}selected{% endif %}>
-              {{ image.name }}
-            </option>
-            {% endfor %}
-          </select>
-        </label>
-        <label class="control-field">
-          <span>Image height <output id="cover-image-height-value">{{ preview.cover.image_height }}px</output></span>
-          <input id="cover-image-height" type="range" min="160" max="620" step="10" value="{{ preview.cover.image_height }}">
-        </label>
-        <label class="control-field">
-          <span>Image fit</span>
-          <select id="cover-image-fit">
-            <option value="cover" {% if preview.cover.image_fit == "cover" %}selected{% endif %}>Cover</option>
-            <option value="contain" {% if preview.cover.image_fit == "contain" %}selected{% endif %}>Contain</option>
-          </select>
-        </label>
-      </div>
-
-      <div id="section-controls" class="inspector-panel hidden">
-        <label class="control-field">
-          <span>Section width</span>
-          <select id="section-width">
-            <option value="full">Full</option>
-            <option value="two_thirds">Two thirds</option>
-            <option value="half">Half</option>
-            <option value="one_third">One third</option>
-          </select>
-        </label>
-        <label class="control-field">
-          <span>Content layout</span>
-          <select id="section-layout">
-            <option value="text_only">Text only</option>
-            <option value="media_top">Images above text</option>
-            <option value="media_bottom">Images below text</option>
-            <option value="media_left">Images left</option>
-            <option value="media_right">Images right</option>
-          </select>
-        </label>
-        <label class="control-field">
-          <span>Card style</span>
-          <select id="section-style">
-            <option value="plain">Plain</option>
-            <option value="soft">Soft background</option>
-            <option value="outline">Outline</option>
-          </select>
-        </label>
-        <label class="control-field">
-          <span>Minimum height <output id="section-height-value"></output></span>
-          <input id="section-height" type="range" min="110" max="760" step="10">
-        </label>
-        <label class="control-field">
-          <span>Title size <output id="title-size-value"></output></span>
-          <input id="title-size" type="range" min="17" max="36" step="1">
-        </label>
-        <label class="control-field">
-          <span>Body size <output id="body-size-value"></output></span>
-          <input id="body-size" type="range" min="11" max="22" step="1">
-        </label>
-        <label class="control-field">
-          <span>Image height <output id="image-height-value"></output></span>
-          <input id="image-height" type="range" min="120" max="620" step="10">
-        </label>
-        <div class="control-row">
-          <label class="control-field">
-            <span>Image fit</span>
-            <select id="image-fit">
-              <option value="cover">Cover</option>
-              <option value="contain">Contain</option>
-            </select>
-          </label>
-          <label class="control-field">
-            <span>Columns</span>
-            <select id="image-columns">
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </label>
-        </div>
-        <label class="toggle-field">
-          <input id="show-caption" type="checkbox"><span>Show image captions</span>
-        </label>
-        <label class="toggle-field">
-          <input id="show-evidence-type" type="checkbox"><span>Show evidence labels</span>
-        </label>
-      </div>
-
-      <div class="export-document-controls">
-        <p class="export-sidebar__section-label">Document</p>
-        <label class="control-field">
-          <span>Font family</span>
-          <select id="document-font-family">
-            {% for font in ["Inter", "Arial", "Georgia", "Times New Roman"] %}
-            <option value="{{ font }}" {% if preview.document.font_family == font %}selected{% endif %}>{{ font }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label class="toggle-field">
-          <input id="show-status-badges" type="checkbox" {% if preview.document.show_status_badges %}checked{% endif %}>
-          <span>Include quality labels in files</span>
-        </label>
-        <label class="toggle-field">
-          <input id="include-missing-sections" type="checkbox" {% if preview.document.include_missing_sections %}checked{% endif %}>
-          <span>Include missing sections</span>
-        </label>
-      </div>
+    <section
+      id="sidebar-tools-panel"
+      class="export-sidebar__panel"
+      role="tabpanel"
+      aria-labelledby="sidebar-tools-tab"
+      data-sidebar-panel="tools"
+      hidden
+    >
+      {% include "partials/export_layout_panel.html" %}
     </section>
   </div>
 </aside>
