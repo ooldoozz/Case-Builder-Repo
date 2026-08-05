@@ -4,11 +4,11 @@
     {% include "partials/head.html" %}
   </head>
 
-  <div
-    id="toast-container"
-    class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"
-  ></div>
-  <body class="bg-gray-100">
+  <body class="min-w-0 overflow-x-clip bg-gray-100">
+    <div
+      id="toast-container"
+      class="fixed top-6 right-6 z-[9999] flex max-w-[calc(100vw-3rem)] flex-col gap-3 pointer-events-none"
+    ></div>
     {% set hide_nav_links = hide_nav_links | default(false) %} {% if
     custom_navbar %} {% include custom_navbar %} {% else %} {% include
     "partials/navbar.html" %} {% endif %}
@@ -18,7 +18,6 @@
     </main>
 
     {% include "partials/scripts.html" %}
-  </body>
   <script>
     function showToast({
       type = "success",
@@ -100,4 +99,5 @@
       setTimeout(closeToast, duration);
     }
   </script>
+  </body>
 </html>

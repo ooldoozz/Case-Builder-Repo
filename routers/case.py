@@ -10,7 +10,6 @@ from schemas import (
     CaseListItem,
     CaseDetailResponse,
     UpdateCaseRequest,
-    UpdateCaseRequest,
 )
 from services.ai.case_builder import generate_case
 from services.ai.case_editor import evaluate_field_status, CaseEditorError
@@ -99,7 +98,7 @@ def get_case(
 @case_router.patch("/{case_id}")
 def review_case_field(
     case_id: int,
-    request: dict,
+    request: UpdateCaseRequest,
     db: Session = Depends(get_db),
 ):
     case = get_case_by_id(
@@ -115,16 +114,7 @@ def review_case_field(
 
     current_case = json.loads(case.generated_json)
 
-    updates = request.get("result")
-
-    if not isinstance(updates, dict) or not updates:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid payload.",
-        )
-
-    field_name = next(iter(updates.keys()))
-    field_data = updates[field_name]
+    field_name = request.field
 
     if field_name not in current_case:
         raise HTTPException(
@@ -132,7 +122,14 @@ def review_case_field(
             detail=f"Unknown field: {field_name}",
         )
 
-    new_content = field_data.get("content")
+    existing_field = current_case[field_name]
+    if not isinstance(existing_field, dict):
+        raise HTTPException(
+            status_code=409,
+            detail="Stored case field has an invalid format.",
+        )
+
+    new_content = request.content
 
     try:
         evaluation = evaluate_field_status(
@@ -144,7 +141,7 @@ def review_case_field(
     except CaseEditorError as exc:
         raise HTTPException(
             status_code=502,
-            detail=f"AI status check failed: {exc}",
+            detail="AI status check failed. Please try again.",
         )
 
     # -------- Update JSON --------
@@ -157,20 +154,6 @@ def review_case_field(
         case=case,
         generated_json=current_case,
     )
-
-    print("=" * 80)
-    print("CASE ID:", case_id)
-    print()
-
-    print(json.dumps(
-        {field_name: current_case[field_name]},
-        indent=2,
-        ensure_ascii=False,
-    ))
-
-    print()
-    print("AI reasoning:", evaluation["reasoning"])
-    print("=" * 80)
 
     return {
         "success": True,

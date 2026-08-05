@@ -1,0 +1,8 @@
+FULL CASE STUDY (for context):
+{{FULL_CASE}}
+
+FIELD CHANGED: {{FIELD_NAME}}
+NEW CONTENT:
+{{FIELD_CONTENT}}
+
+Evaluate only this field and return the JSON object described in your instructions.

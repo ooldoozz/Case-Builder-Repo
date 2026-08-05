@@ -12,9 +12,12 @@ def create_case(
 
     db.add(case)
 
-    db.commit()
-
-    db.refresh(case)
+    try:
+        db.commit()
+        db.refresh(case)
+    except Exception:
+        db.rollback()
+        raise
 
     return case
 
@@ -44,8 +47,12 @@ def update_case(
     case: CaseStudy,
 ) -> CaseStudy:
 
-    db.commit()
-    db.refresh(case)
+    try:
+        db.commit()
+        db.refresh(case)
+    except Exception:
+        db.rollback()
+        raise
 
     return case
 
@@ -64,7 +71,11 @@ def update_case_content(
     if status is not None:
         case.status = status
 
-    db.commit()
-    db.refresh(case)
+    try:
+        db.commit()
+        db.refresh(case)
+    except Exception:
+        db.rollback()
+        raise
 
     return case

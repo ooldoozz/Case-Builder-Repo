@@ -11,10 +11,16 @@ def save_case(
     request,
     result: dict,
 ) -> CaseStudy:
+    overview = result.get("project_overview")
+    overview_content = (
+        overview.get("content")
+        if isinstance(overview, dict)
+        else overview
+    )
+    title = request.project_name or overview_content or "Untitled case study"
 
     case = CaseStudy(
-        title=request.project_name
-        or result.get("project_overview"),
+        title=str(title)[:255],
 
         template=request.template,
 

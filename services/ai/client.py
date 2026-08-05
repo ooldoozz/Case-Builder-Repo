@@ -1,10 +1,14 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
 
+DEFAULT_SYSTEM_PROMPT_PATH = (
+    Path(__file__).resolve().parents[2] / "prompts" / "default_system.txt"
+)
 
 class AIClient:
 
@@ -13,6 +17,8 @@ class AIClient:
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL"),
+            timeout=float(os.getenv("OPENAI_TIMEOUT_SECONDS", "60")),
+            max_retries=int(os.getenv("OPENAI_MAX_RETRIES", "2")),
         )
 
         self.model = os.getenv("MODEL", "deepseek-chat")
@@ -24,14 +30,9 @@ class AIClient:
     ) -> str:
 
         if system_prompt is None:
-            system_prompt = (
-                "You are a senior Product Design mentor and UX hiring reviewer. "
-                "Always return valid JSON only. "
-                "Never use markdown. "
-                "Never explain your output. "
-                "Never invent information. "
-                "If information is insufficient, return null and assign the correct status."
-            )
+            system_prompt = DEFAULT_SYSTEM_PROMPT_PATH.read_text(
+                encoding="utf-8-sig",
+            ).strip()
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -48,7 +49,11 @@ class AIClient:
             ],
         )
 
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("AI response did not contain any content.")
+
+        return content.strip()
 
 
 ai_client = AIClient()

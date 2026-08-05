@@ -4,14 +4,13 @@
 
 {% block content %}
 
-<div class="max-w-7xl mx-auto px-6 py-16">
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div class="mx-auto max-w-[1200px] px-5 py-10 sm:px-6 sm:py-14 lg:py-16">
+  <div class="grid min-w-0 grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-12">
     <!-- Left: copy -->
     <div>
-      <h1
-        class="text-4xl lg:text-5xl font-extrabold leading-tight text-slate-900"
-      >
-        Turn raw project notes into a structured case study.
+      <h1 class="text-4xl font-extrabold leading-tight text-slate-900 lg:text-5xl">
+        Turn raw project notes into a clear, editable
+        <span class="text-[#4F6BFF]">Case Study</span>.
       </h1>
 
       <p class="mt-6 text-lg text-slate-600 max-w-xl">
@@ -19,7 +18,7 @@
         save your case study.
       </p>
 
-      <ol class="flex items-center gap-4 mt-6 text-sm text-slate-500">
+      <ol class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
         <li
           class="flex items-center gap-2"
           style="font-weight: 500; font-size: 14px"
@@ -115,16 +114,16 @@
       </p>
     </div>
 
-    <div class="relative">
+    <div class="relative min-w-0 overflow-hidden rounded-3xl lg:overflow-visible">
       <!-- Hero glow (positioned relative to this parent) -->
       <div
-        style="position:absolute; width:560px; height:560px; right:-140px; top:-40px; background:#E8ECFF; opacity:0.72; border-radius:50%; filter:blur(48px); pointer-events:none;"
+        class="pointer-events-none absolute -right-1/4 -top-10 aspect-square w-full max-w-[560px] rounded-full bg-[#E8ECFF] opacity-70 blur-3xl"
         aria-hidden="true"
       ></div>
 
       <!-- Hero glow secondary (positioned relative to this parent) -->
       <div
-        style="position:absolute; width:390px; height:390px; right:-40px; bottom:-40px; background:#E6F7F4; opacity:0.66; border-radius:50%; filter:blur(40px); pointer-events:none;"
+        class="pointer-events-none absolute -bottom-10 -right-10 aspect-square w-2/3 max-w-[390px] rounded-full bg-[#E6F7F4] opacity-60 blur-3xl"
         aria-hidden="true"
       ></div>
 

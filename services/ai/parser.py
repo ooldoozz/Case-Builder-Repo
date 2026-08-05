@@ -104,6 +104,14 @@ def _normalize_field(value) -> dict:
     content = value.get("content")
     status = str(value.get("status", "missing")).lower()
 
+    if isinstance(content, str):
+        content = content.strip() or None
+    elif content is not None:
+        content = None
+
+    if content is None:
+        status = "missing"
+
     if content == "":
         content = None
 
@@ -143,5 +151,7 @@ def parse_case_response(text: str) -> dict:
     cleaned = _extract_json(cleaned)
 
     data = json.loads(cleaned)
+    if not isinstance(data, dict):
+        raise ValueError("AI response must contain a JSON object.")
 
     return _normalize_schema(data)

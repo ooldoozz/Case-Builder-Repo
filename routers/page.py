@@ -242,7 +242,7 @@ def archive(
 
         result = json.loads(case.generated_json)
 
-        filled, progress = calculate_progress(result)
+        counts, progress = calculate_progress(result)
 
         archive_cases.append(
             {
@@ -254,7 +254,7 @@ def archive(
                 "updated_at": humanize_datetime(case.updated_at),
                 "created_at": case.created_at,
                 "progress": progress,
-                "filled_sections": filled,
+                "filled_sections": counts["complete"],
             }
         )
 

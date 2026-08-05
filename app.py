@@ -1,15 +1,15 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from database import Base, engine
+from database import initialize_database, is_database_ready
 from routers import case_router, page_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    initialize_database()
     yield
 
 
@@ -55,4 +55,19 @@ app.include_router(case_router)
 def health():
     return {
         "status": "healthy"
+    }
+
+
+@app.get("/ready")
+def readiness(response: Response):
+    if not is_database_ready():
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {
+            "status": "not_ready",
+            "database": "unavailable",
+        }
+
+    return {
+        "status": "ready",
+        "database": "available",
     }

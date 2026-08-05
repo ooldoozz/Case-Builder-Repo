@@ -1,121 +1,62 @@
 import json
+from pathlib import Path
 
 from .client import ai_client
 
 ALLOWED_STATUSES = {"complete", "missing", "weak"}
-
-SYSTEM_PROMPT = """
-You are a Senior Product Design Hiring Manager and UX Portfolio Reviewer.
-
-Your job is to review ONE edited field of a Product Design case study.
-
-The complete case study is provided only for context.
-
-Evaluate ONLY the edited field.
-
-Do not rewrite the content.
-
-Do not invent missing information.
-
-Do not evaluate any other field.
-
-Use the following statuses only:
-
-complete
-weak
-missing
-
-Definitions
-
-missing
-
-The field is empty, null, or contains no meaningful information.
-
-weak
-
-The content is understandable but is not yet portfolio-ready.
-
-Use weak when:
-
-- important details are missing
-- evidence is missing
-- reasoning is missing
-- ownership is too shallow
-- explanations are too generic
-- the field would likely trigger follow-up questions from a hiring manager
-
-complete
-
-Use complete only when:
-
-- the information is explicit
-- the scope is clear
-- the content stands on its own
-- the explanation is sufficiently detailed
-- the content feels portfolio-ready
-- a hiring manager would not immediately ask for clarification
-
-Return only JSON.
-
-{
-    "status":"complete|weak|missing",
-    "reasoning":"One concise sentence explaining the decision."
-}
-
-The reasoning should explain what is missing rather than simply repeating the content.
-
-Never output markdown.
-
-Never output anything outside the JSON.
-"""
+PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 
 
 class CaseEditorError(Exception):
     """Raised when the AI field-status evaluation cannot be completed."""
 
 
-def _build_prompt(full_case: dict, field_name: str, field_content: str) -> str:
+def _load_prompt(name: str) -> str:
+    return (PROMPTS_DIR / name).read_text(encoding="utf-8-sig").strip()
+
+
+def _build_prompt(full_case: dict, field_name: str, field_content: str | None) -> str:
     return (
-        "FULL CASE STUDY (for context):\n"
-        f"{json.dumps(full_case, indent=2, ensure_ascii=False)}\n\n"
-        f"FIELD CHANGED: {field_name}\n"
-        f"NEW CONTENT:\n{field_content!r}\n\n"
-        "Evaluate only this field and return the JSON object described in your instructions."
+        _load_prompt("case_editor_user.txt")
+        .replace(
+            "{{FULL_CASE}}",
+            json.dumps(full_case, indent=2, ensure_ascii=False),
+        )
+        .replace("{{FIELD_NAME}}", field_name)
+        .replace("{{FIELD_CONTENT}}", repr(field_content or ""))
     )
 
 
-def evaluate_field_status(full_case: dict, field_name: str, field_content: str) -> dict:
-    """
-    Ask the AI to evaluate a single updated field against the rest of the case
-    and return {"status": ..., "reasoning": ...}.
-
-    Raises CaseEditorError on any failure (bad request, network/API error,
-    invalid JSON, invalid status) so the caller never has to handle a raw
-    exception from the AI client.
-    """
+def evaluate_field_status(
+    full_case: dict,
+    field_name: str,
+    field_content: str | None,
+) -> dict:
     if not field_name:
         raise CaseEditorError("No field name provided to evaluate.")
 
-    prompt = _build_prompt(full_case, field_name, field_content or "")
-
     try:
         raw_content = ai_client.generate(
-            prompt=prompt,
-            system_prompt=SYSTEM_PROMPT,
+            prompt=_build_prompt(full_case, field_name, field_content),
+            system_prompt=_load_prompt("case_editor_system.txt"),
         )
     except Exception as exc:
-        raise CaseEditorError(f"AI request failed: {exc}") from exc
+        raise CaseEditorError("AI request failed.") from exc
 
     try:
         result = json.loads(raw_content)
     except json.JSONDecodeError as exc:
         raise CaseEditorError("AI response was not valid JSON.") from exc
 
+    if not isinstance(result, dict):
+        raise CaseEditorError("AI response was not a JSON object.")
+
     status = result.get("status")
     if status not in ALLOWED_STATUSES:
-        raise CaseEditorError(f"AI returned an invalid status: {status!r}")
+        raise CaseEditorError("AI returned an invalid status.")
 
+    reasoning = result.get("reasoning", "")
     return {
         "status": status,
-        "reasoning": result.get("reasoning", ""),
+        "reasoning": reasoning if isinstance(reasoning, str) else "",
     }
