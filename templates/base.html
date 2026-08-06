@@ -19,7 +19,6 @@
     </main>
 
     {% include "partials/scripts.html" %}
-<<<<<<< HEAD
   <script>
     function showToast({
       type = "success",
@@ -32,10 +31,7 @@
         info: "text-[#4F6BFF]",
         error: "text-[#D92D20]",
       };
-=======
->>>>>>> c1dc29613c935e382fee239b7d717a3bbc3aca1b
 
-    <script>
       function showToast({ type = "success", title, description = "", duration = 4000 }) {
         const colors = {
           success: "text-[#047857]",
@@ -60,16 +56,11 @@
         toast.querySelector(".toast-close").onclick = closeToast;
         setTimeout(closeToast, duration);
       }
-    </script>
 
-<<<<<<< HEAD
       toast.querySelector(".toast-close").onclick = closeToast;
 
       setTimeout(closeToast, duration);
     }
   </script>
-=======
-    {% block page_scripts %}{% endblock %}
->>>>>>> c1dc29613c935e382fee239b7d717a3bbc3aca1b
   </body>
 </html>

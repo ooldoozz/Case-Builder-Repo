@@ -9,19 +9,24 @@ load_dotenv()
 DEFAULT_SYSTEM_PROMPT_PATH = (
     Path(__file__).resolve().parents[2] / "prompts" / "default_system.txt"
 )
+AVALAI_BASE_URL = "https://api.avalai.ir/v1"
+
 
 class AIClient:
 
     def __init__(self):
+        api_key = os.getenv("AVALAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("AVALAI_API_KEY environment variable is not configured.")
 
         self.client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL"),
-            timeout=float(os.getenv("OPENAI_TIMEOUT_SECONDS", "60")),
-            max_retries=int(os.getenv("OPENAI_MAX_RETRIES", "2")),
+            api_key=api_key,
+            base_url=AVALAI_BASE_URL,
+            timeout=float(os.getenv("AVALAI_TIMEOUT_SECONDS", "60")),
+            max_retries=int(os.getenv("AVALAI_MAX_RETRIES", "2")),
         )
 
-        self.model = os.getenv("MODEL", "deepseek-chat")
+        self.model = os.getenv("AVALAI_MODEL", "deepseek-v4-pro")
 
     def generate(
         self,
