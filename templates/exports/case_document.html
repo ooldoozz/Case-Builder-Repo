@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm;
+      @bottom-right {
+        content: counter(page);
+        color: #98a2b3;
+        font-size: 8pt;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #344054;
+      font-family: "{{ preview.document.font_family }}", Arial, sans-serif;
+      font-size: {{ preview.document.base_font_size }}px;
+      line-height: 1.55;
+    }
+    .cover {
+      margin-bottom: 18px;
+      overflow: hidden;
+      border: 1px solid #e4e7ec;
+      border-radius: 16px;
+      break-inside: avoid;
+    }
+    .cover-content { padding: 28px; background: #f8fafc; }
+    .eyebrow { color: #667085; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 12px 0 10px; color: #101828; font-size: 30px; line-height: 1.12; }
+    .subtitle { margin: 0; color: #475467; }
+    .meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+    .meta-item { padding: 10px; border-radius: 8px; background: #fff; }
+    .meta-item span { display: block; color: #98a2b3; font-size: 7px; font-weight: 700; text-transform: uppercase; }
+    .meta-item strong { display: block; margin-top: 4px; color: #344054; font-size: 9px; }
+    .cover-media img { display: block; width: 100%; height: {{ preview.cover.image_height }}px; object-fit: {{ preview.cover.image_fit }}; }
+
+    .section-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+    .case-section { break-inside: avoid; page-break-inside: avoid; }
+    .case-section.soft { border-radius: 12px; background: #f8fafc; }
+    .case-section.outline { border: 1px solid #e4e7ec; border-radius: 12px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .section-title { display: flex; align-items: baseline; gap: 10px; }
+    .number { color: #98a2b3; font-size: 8px; font-weight: 700; }
+    h2 { margin: 0; color: #101828; line-height: 1.2; }
+    .badge { padding: 4px 8px; border-radius: 999px; font-size: 7px; font-weight: 700; }
+    .badge.complete { color: #15803d; background: #ecfdf3; }
+    .badge.weak { color: #c2410c; background: #fff7ed; }
+    .badge.unclear { color: #6d28d9; background: #f5f3ff; }
+    .badge.missing { color: #b91c1c; background: #fef2f2; }
+    .body p { margin: 0 0 9px; }
+    .content.media_top,
+    .content.media_bottom { display: flex; flex-direction: column; gap: 12px; }
+    .content.media_top .media { order: -1; }
+    .content.media_left,
+    .content.media_right { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+    .content.media_left .media { order: -1; }
+    .content.text_only .media { display: none; }
+    .image-grid { display: grid; gap: 8px; }
+    figure { margin: 0; }
+    figure img { display: block; width: 100%; border: 1px solid #e4e7ec; border-radius: 8px; }
+    .evidence { display: inline-block; margin-bottom: 5px; padding: 3px 7px; color: #667085; border: 1px solid #e4e7ec; border-radius: 999px; font-size: 7px; }
+    figcaption { margin-top: 5px; color: #667085; font-size: 8px; }
+    .missing-card { padding: 12px; color: #b91c1c; border: 1px solid #fecaca; border-radius: 9px; background: #fef2f2; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div class="cover-content">
+      <div class="eyebrow">{{ preview.cover.eyebrow }}</div>
+      <h1>{{ case.title }}</h1>
+      {% if preview.cover.subtitle %}<p class="subtitle">{{ preview.cover.subtitle }}</p>{% endif %}
+      <div class="meta">
+        {% for label, value in [("Role", preview.cover.role), ("Platform", preview.cover.platform), ("Focus", preview.cover.focus), ("Timeline", preview.cover.timeline)] %}
+        <div class="meta-item"><span>{{ label }}</span><strong>{{ value or "—" }}</strong></div>
+        {% endfor %}
+      </div>
+    </div>
+    {% if cover_image and cover_image.data_uri %}
+    <div class="cover-media"><img src="{{ cover_image.data_uri }}" alt="{{ cover_image.caption or cover_image.name }}"></div>
+    {% endif %}
+  </section>
+
+  <div class="section-grid">
+    {% for section in sections %}
+      {% if section.status != "missing" or preview.document.include_missing_sections %}
+      {% set settings = preview.sections[section.key] %}
+      <section
+        class="case-section {{ settings.style }}"
+        style="grid-column: span {{ width_span(settings.width) }}; min-height: {{ settings.min_height }}px; padding: {{ settings.padding }}px;"
+      >
+        <div class="section-heading">
+          <div class="section-title">
+            <span class="number">{{ section.number }}</span>
+            <h2 style="font-size: {{ settings.title_size }}px;">{{ section.title }}</h2>
+          </div>
+          {% if preview.document.show_status_badges %}<span class="badge {{ section.status }}">{{ section.status | title }}</span>{% endif %}
+        </div>
+
+        <div class="content {{ settings.layout }}">
+          <div class="body" style="font-size: {{ settings.body_size }}px; line-height: {{ settings.line_height }}; text-align: {{ settings.text_align }};">
+            {% if section.body %}
+              {% for paragraph in section.body.split("\n") %}{% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}{% endfor %}
+            {% else %}
+              <div class="missing-card">No usable content is available for this section.</div>
+            {% endif %}
+          </div>
+
+          <div class="media">
+            <div class="image-grid" style="grid-template-columns: repeat({{ settings.image_columns }}, minmax(0, 1fr));">
+              {% for image in images_by_section.get(section.key, []) %}
+                {% if image.data_uri %}
+                <figure>
+                  {% if settings.show_evidence_type %}<span class="evidence">{{ image.evidence_type }}</span>{% endif %}
+                  <img src="{{ image.data_uri }}" alt="{{ image.caption or image.name }}" style="height: {{ settings.image_height }}px; object-fit: {{ settings.image_fit }};">
+                  {% if settings.show_caption and image.caption %}<figcaption>{{ image.caption }}</figcaption>{% endif %}
+                </figure>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+  </div>
+</body>
+</html>

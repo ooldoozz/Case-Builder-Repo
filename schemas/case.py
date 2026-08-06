@@ -23,6 +23,7 @@ class CreateCaseRequest(BaseModel):
     project_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)] | None = None
     note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50_000)]
 
+
 class CaseListItem(BaseModel):
     id: int
     title: str | None
@@ -34,6 +35,7 @@ class CaseListItem(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class CaseDetailResponse(BaseModel):
     id: int
     title: str | None
@@ -43,6 +45,7 @@ class CaseDetailResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     result: dict
+
 
 class UpdateCaseRequest(BaseModel):
     field: CaseFieldName

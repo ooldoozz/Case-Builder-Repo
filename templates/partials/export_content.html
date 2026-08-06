@@ -1,219 +1,106 @@
-<div class="min-h-full">
-  {% for section in sections %}
-  {% if section.status == "complete" %}
-    {% set badge_bg = "#ECFDF3" %}
-    {% set badge_border = "#BBF7D0" %}
-    {% set badge_text = "#15803D" %}
-    {% set badge_label = "Complete" %}
-    {% set status = "complete" %}
-  {% elif section.status == "weak" %}
-    {% set badge_bg = "#FFF7ED" %}
-    {% set badge_border = "#FED7AA" %}
-    {% set badge_text = "#C2410C" %}
-    {% set badge_label = "Weak" %}
-    {% set status = "weak" %}
-  {% elif section.status == "unclear" %}
-    {% set badge_bg = "#F5F3FF" %}
-    {% set badge_border = "#DDD6FE" %}
-    {% set badge_text = "#6D28D9" %}
-    {% set badge_label = "Unclear" %}
-    {% set status = "unclear" %}
-  {% else %}
-    {% set badge_bg = "#FEF2F2" %}
-    {% set badge_border = "#FECACA" %}
-    {% set badge_text = "#B91C1C" %}
-    {% set badge_label = "Missing" %}
-    {% set status = "missing" %}
-  {% endif %}
+<div
+  id="preview-canvas"
+  class="preview-canvas"
+  style="--document-font: '{{ preview.document.font_family }}'; --content-width: {{ preview.document.content_width }}px;"
+>
+  <article id="preview-cover" class="preview-cover is-selected" data-editor-target="cover">
+    <div class="preview-cover__content">
+      <input id="cover-eyebrow" class="inline-editor inline-editor--eyebrow" value="{{ preview.cover.eyebrow }}" aria-label="Case study eyebrow">
+      <h1>{{ case.title }}</h1>
+      <textarea id="cover-subtitle" class="inline-editor inline-editor--subtitle" rows="2" aria-label="Case study subtitle">{{ preview.cover.subtitle }}</textarea>
 
-  <section
-    id="{{ section.key }}"
-    class="export-section snap-start h-[calc(100vh-72px)] px-24 py-20 border-b border-[#EAECF0]"
-  >
-
-    <div class="flex items-center gap-4 mb-10">
-      <h1 class="text-[38px] font-bold tracking-[-0.03em] text-[#101828]">
-        {{ section.title }}
-      </h1>
-
-      <span
-        class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold"
-        style="
-          background: {{ badge_bg }};
-          border-color: {{ badge_border }};
-          color: {{ badge_text }};
-        "
-      >
-        <span class="shrink-0">
-
-          {% if status == "complete" %}
-          <!-- complete icon -->
-          {% elif status == "weak" %}
-          <!-- weak icon -->
-          {% elif status == "unclear" %}
-          <!-- unclear icon -->
-          {% else %}
-          <!-- missing icon -->
-          {% endif %}
-
-        </span>
-
-        {{ badge_label }}
-      </span>
+      <div class="preview-meta-grid">
+        <label><span>Role</span><input id="cover-role" class="inline-editor" value="{{ preview.cover.role }}"></label>
+        <label><span>Platform</span><input id="cover-platform" class="inline-editor" value="{{ preview.cover.platform }}"></label>
+        <label><span>Focus</span><input id="cover-focus" class="inline-editor" value="{{ preview.cover.focus }}"></label>
+        <label><span>Timeline</span><input id="cover-timeline" class="inline-editor" value="{{ preview.cover.timeline }}" placeholder="Add timeline"></label>
+      </div>
     </div>
 
-    {% if section.body %}
-
     <div
-      class="prose prose-lg max-w-none
-             prose-headings:text-[#101828]
-             prose-p:text-[#344054]
-             prose-p:text-[18px]
-             prose-p:leading-9
-             prose-strong:text-[#101828]"
+      id="cover-media"
+      class="preview-cover__media {% if not preview.cover.cover_image_id %}is-empty{% endif %}"
+      style="--cover-image-height: {{ preview.cover.image_height }}px; --cover-image-fit: {{ preview.cover.image_fit }};"
     >
-
-      {% for paragraph in section.body.split("\n") %}
-      {% if paragraph.strip() %}
-      <p class="mb-6 whitespace-pre-line">
-        {{ paragraph }}
-      </p>
-      {% endif %}
+      {% set cover_ns = namespace(image=None) %}
+      {% for image in all_images %}
+        {% if image.id == preview.cover.cover_image_id %}{% set cover_ns.image = image %}{% endif %}
       {% endfor %}
-
+      {% if cover_ns.image %}
+      <img src="{{ cover_ns.image.location }}" alt="{{ cover_ns.image.caption or cover_ns.image.name }}">
+      {% else %}
+      <div class="empty-media-placeholder"><span>Cover image</span><small>Choose one from Layout settings</small></div>
+      {% endif %}
     </div>
+  </article>
 
-    {% else %}
-
-    <div
-      class="rounded-2xl border border-dashed border-[#D0D5DD] bg-[#F9FAFB] px-8 py-12"
+  <div id="preview-section-grid" class="preview-section-grid">
+    {% for section in sections %}
+    {% set settings = preview.sections[section.key] %}
+    {% set section_images = images_by_section.get(section.key, []) %}
+    <section
+      id="{{ section.key }}"
+      class="preview-section preview-section--{{ settings.style }} status-{{ section.status }}"
+      data-section-key="{{ section.key }}"
+      data-editor-target="section"
+      data-width="{{ settings.width }}"
+      data-layout="{{ settings.layout }}"
+      style="
+        --section-span: {{ width_span(settings.width) }};
+        --section-min-height: {{ settings.min_height }}px;
+        --section-padding: {{ settings.padding }}px;
+        --section-title-size: {{ settings.title_size }}px;
+        --section-body-size: {{ settings.body_size }}px;
+        --section-line-height: {{ settings.line_height }};
+        --section-text-align: {{ settings.text_align }};
+        --section-image-height: {{ settings.image_height }}px;
+        --section-image-fit: {{ settings.image_fit }};
+        --section-image-columns: {{ settings.image_columns }};
+      "
     >
-      <h3 class="text-lg font-semibold text-[#667085]">
-        No content available
-      </h3>
+      <div class="preview-section__heading">
+        <div class="preview-section__title-wrap">
+          <span class="preview-section__number">{{ section.number }}</span>
+          <h2>{{ section.title }}</h2>
+        </div>
+        <span class="quality-badge quality-badge--{{ section.status }}">{{ section.status | title }}</span>
+      </div>
 
-      <p class="mt-2 text-[#98A2B3]">
-        This section has no generated content.
-      </p>
-    </div>
+      <div class="preview-section__body" data-layout="{{ settings.layout }}">
+        <div class="preview-block preview-block--text" draggable="true" data-block-type="text">
+          {% if section.body %}
+            {% for paragraph in section.body.split("\n") %}
+              {% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}
+            {% endfor %}
+          {% else %}
+          <div class="missing-content-card">
+            <strong>Add a measurable result or clear proxy before final export.</strong>
+            <span>This section does not have usable content yet.</span>
+          </div>
+          {% endif %}
+        </div>
 
-    {% endif %}
-  </section>
+        <div class="preview-block preview-block--media {% if not section_images %}is-empty{% endif %}" draggable="true" data-block-type="media">
+          {% if section_images %}
+          <div class="preview-image-grid">
+            {% for image in section_images %}
+            <figure class="preview-image-card" draggable="true" data-image-id="{{ image.id }}" data-section-key="{{ section.key }}">
+              {% if settings.show_evidence_type %}<span class="preview-image-card__label">{{ image.evidence_type }}</span>{% endif %}
+              <img src="{{ image.location }}" alt="{{ image.caption or image.name }}">
+              {% if settings.show_caption and image.caption %}<figcaption>{{ image.caption }}</figcaption>{% endif %}
+            </figure>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-media-placeholder empty-media-placeholder--small"><span>No Visual Evidence</span><small>Add images from the Edit page</small></div>
+          {% endif %}
+        </div>
+      </div>
 
-  {% endfor %}
+      <button type="button" class="section-resize-handle" aria-label="Resize section" title="Drag horizontally to change width and vertically to change height">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 14h8V6M10 14h4v-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+    </section>
+    {% endfor %}
+  </div>
 </div>
-
-<script>
-const container = document.getElementById("export-scroll");
-const sections = [...document.querySelectorAll(".export-section")];
-const navItems = [...document.querySelectorAll(".section-link")];
-const currentTitle = document.getElementById("current-section-title");
-
-let current = 0;
-let locked = false;
-
-/* -------------------------
-   Active sidebar
--------------------------- */
-
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-
-      const index = sections.indexOf(entry.target);
-      current = index;
-
-      navItems.forEach((item) =>
-        item.classList.remove("bg-[#F2F4F7]", "shadow-sm")
-      );
-
-      const active = document.querySelector(
-        `.section-link[data-target="${entry.target.id}"]`
-      );
-
-      if (!active) return;
-
-      active.classList.add("bg-[#F2F4F7]", "shadow-sm");
-
-      const title = active.querySelector(".section-title");
-      if (title) {
-        currentTitle.textContent = title.textContent.trim();
-      }
-    });
-  },
-  {
-    root: container,
-    threshold: 0.5,
-  }
-);
-
-sections.forEach((section) => observer.observe(section));
-
-/* -------------------------
-   Sidebar click
--------------------------- */
-
-navItems.forEach((item) => {
-  item.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    const target = document.getElementById(item.dataset.target);
-
-    container.scrollTo({
-      top: target.offsetTop,
-      behavior: "smooth",
-    });
-  });
-});
-
-/* -------------------------
-   Keep current index synced
--------------------------- */
-
-container.addEventListener("scroll", () => {
-  const y = container.scrollTop;
-
-  sections.forEach((section, index) => {
-    if (
-      y >= section.offsetTop - 80 &&
-      y < section.offsetTop + section.offsetHeight - 80
-    ) {
-      current = index;
-    }
-  });
-});
-
-/* -------------------------
-   Snap Wheel
--------------------------- */
-
-container.addEventListener(
-  "wheel",
-  (e) => {
-    e.preventDefault();
-
-    if (locked) return;
-
-    locked = true;
-
-    if (e.deltaY > 0 && current < sections.length - 1) {
-      current++;
-    }
-
-    if (e.deltaY < 0 && current > 0) {
-      current--;
-    }
-
-    container.scrollTo({
-      top: sections[current].offsetTop,
-      behavior: "smooth",
-    });
-
-    setTimeout(() => {
-      locked = false;
-    }, 650);
-  },
-  { passive: false }
-);
-</script>

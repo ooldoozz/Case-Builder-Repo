@@ -1,155 +1,31 @@
 {% extends "base.html" %}
 
+{% block title %}Review & Export — {{ case.title }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/export_preview.css">
+{% endblock %}
+
 {% block content %}
-
-<div class="flex h-[calc(100vh-72px)] flex-col overflow-hidden">
-
-  <div class="flex flex-1 overflow-hidden">
-
-    {% include "partials/export_sidebar.html" %}
-
-    <main
-      id="export-scroll"
-      class="flex-1 overflow-y-auto snap-y snap-mandatory scroll-smooth"
-    >
-      {% include "partials/export_content.html" %}
-    </main>
-
-  </div>
-
+<div
+  id="export-app"
+  class="export-app"
+  data-case-id="{{ case.id }}"
+  data-preview-version="{{ preview_version }}"
+>
+  {% include "partials/export_sidebar.html" %}
+  <main id="export-scroll" class="export-workspace">
+    {% include "partials/export_content.html" %}
+  </main>
 </div>
 
 {% include "partials/export_modals.html" %}
 
-<script>
-const container = document.getElementById("export-scroll");
+<script id="preview-state-json" type="application/json">{{ preview | tojson }}</script>
+<script id="default-preview-json" type="application/json">{{ default_preview | tojson }}</script>
+<script id="images-json" type="application/json">{{ all_images | tojson }}</script>
+{% endblock %}
 
-const sections = [...document.querySelectorAll(".export-section")];
-
-const sidebarLinks = [...document.querySelectorAll(".section-link")];
-
-const currentTitle = document.getElementById("current-section-title");
-
-let current = 0;
-
-/* ----------------------------------
-   Sidebar Active State
------------------------------------ */
-
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-
-      current = sections.indexOf(entry.target);
-
-      sidebarLinks.forEach((link) => {
-        link.classList.remove(
-          "bg-[#F2F4F7]",
-          "text-[#101828]",
-          "shadow-sm"
-        );
-      });
-
-      const active = document.querySelector(
-        `.section-link[data-target="${entry.target.id}"]`
-      );
-
-      if (!active) return;
-
-      active.classList.add(
-        "bg-[#F2F4F7]",
-        "text-[#101828]",
-        "shadow-sm"
-      );
-
-      const title = active.querySelector(".section-title");
-
-      if (title) {
-        currentTitle.textContent = title.textContent.trim();
-      }
-    });
-  },
-  {
-    root: container,
-    threshold: 0.5,
-  }
-);
-
-sections.forEach((section) => observer.observe(section));
-
-/* ----------------------------------
-   Sidebar Navigation
------------------------------------ */
-
-sidebarLinks.forEach((link) => {
-  link.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    const target = document.getElementById(link.dataset.target);
-
-    if (!target) return;
-
-    container.scrollTo({
-      top: target.offsetTop,
-      behavior: "smooth",
-    });
-  });
-});
-
-/* ----------------------------------
-   Sync current index
------------------------------------ */
-
-container.addEventListener("scroll", () => {
-  const scrollTop = container.scrollTop;
-
-  sections.forEach((section, index) => {
-    if (
-      scrollTop >= section.offsetTop - 80 &&
-      scrollTop < section.offsetTop + section.offsetHeight - 80
-    ) {
-      current = index;
-    }
-  });
-});
-
-/* ----------------------------------
-   Section Snap Wheel
------------------------------------ */
-
-let locked = false;
-
-container.addEventListener(
-  "wheel",
-  (e) => {
-    e.preventDefault();
-
-    if (locked) return;
-
-    locked = true;
-
-    if (e.deltaY > 0 && current < sections.length - 1) {
-      current++;
-    }
-
-    if (e.deltaY < 0 && current > 0) {
-      current--;
-    }
-
-    container.scrollTo({
-      top: sections[current].offsetTop,
-      behavior: "smooth",
-    });
-
-    setTimeout(() => {
-      locked = false;
-    }, 650);
-  },
-  {
-    passive: false,
-  }
-);
-</script>
-
+{% block page_scripts %}
+<script src="/static/js/export_preview.js"></script>
 {% endblock %}
